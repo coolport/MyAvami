@@ -5,15 +5,23 @@ import dotenv from 'dotenv';
 // import router from "./routes/product.route.js";
 import cors from "cors";
 
+const PORT = process.env.PORT;
 const app = express();
-const tempport = 5001;
 
+app.use(cors());
+app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.send("Hello World")
-});
+app.use("/", router)
 
-app.listen(tempport, () => {
+app.get('/test', (req, res) => {
+  try {
+    res.send("Serving /test");
+  } catch {
+    console.error("Failed with error:", error.message);
+  };
+})
+
+app.listen(PORT, () => {
   console.log("Server is running on PORT:", tempport);
 });
 

@@ -1,3 +1,23 @@
+.env
+.git
+.nsm
+
+node_modules
+jspm_packages
+build/Release
+
+package-lock.json
+
+logs
+*.log
+npm-debug.log*
+
+pids
+*.pid
+*.seed
+
+
+# below from gitignore.io
 # Logs
 logs
 *.log
