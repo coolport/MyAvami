@@ -11,7 +11,8 @@ export const connectDB = async () => {
     // sa windows, same lang, start mongod service, which will start a mongodb instance
     // on the default port (hopefully 27017 din)
     // ung maiiba lang talaga is this line / env variable
-    const conn = await mongoose.connect(process.env.MONGO_URI);
+    //const conn = await mongoose.connect(process.env.MONGO_URI);
+    const conn = await mongoose.connect("mongodb://localhost:27017/");
     console.log(`MongoDB Connected: ${conn.connection.host}`);
 
   } catch (error) {
