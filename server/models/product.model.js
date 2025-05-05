@@ -5,8 +5,12 @@ import mongoose from 'mongoose';
 //defines fields(attrib) of object and what data type they are
 const productSchema = new mongoose.Schema(
   { //Fields definition (1st arg in schema func)
-    productName: {
+    name: {
       type: String,
+      required: true
+    },
+    id: {
+      type: Number,
       required: true
     },
     price: {
@@ -15,7 +19,7 @@ const productSchema = new mongoose.Schema(
     },
     count: {
       type: Number,
-      required: true
+      required: false
     },
     image: {
       type: String,
