@@ -13,13 +13,17 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    itemCategory: {
+      type: String,
+      required: true
+    },
     itemPrice: {
       type: Number,
       required: true
     },
     itemExpiration: {
       type: Date,
-      required: true
+      required: false
     },
     itemCount: {
       type: Number,
