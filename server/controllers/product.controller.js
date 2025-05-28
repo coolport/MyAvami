@@ -21,7 +21,7 @@ export const postProducts = async (req, res) => {
   const product = req.body; //Return Value: Object 
   // The req.body property is used to access the data sent by the client in POST requests. 
 
-  if (!product.name || !product.id || !product.price || !product.image) {
+  if (!product.itemName || !product.itemDescription || !product.itemPrice || !product.itemExpiration || !product.itemCount || !product.itemImage) {
     return res.status(400).json({ success: false, message: "Please provide all fields" })
   }
 
