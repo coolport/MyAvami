@@ -13,6 +13,9 @@ function Navbar() {
         <Link to="/inventory">
           <Button>Inventory</Button>
         </Link>
+        <Link to="/entry">
+          <Button>Add Item</Button>
+        </Link>
       </HStack >
       <div>
         Navbar
