@@ -16,7 +16,7 @@ app.use(express.json());
 //pwede naman din ilagay actual routing dito
 //but better if separated yung conerns like in this case
 //where we have a routes dir and file
-app.use("/", router)
+app.use("/products", router)
 app.use("/users", userRouter)
 
 app.get('/test', (req, res) => {
