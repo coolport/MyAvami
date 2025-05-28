@@ -12,9 +12,11 @@ function Entry() {
   const { register, handleSubmit } = useForm();
 
   async function onSubmit(data) {
-    console.log(data)
+    const { id } = req.params;
+    console.log(data);
+    console.log("id: ", id);
 
-    const url = "http://localhost:5555"
+    const url = "http://localhost:5555/products";
 
     try {
       const response = await fetch(url, {
@@ -22,17 +24,33 @@ function Entry() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
-      console.log(response)
     } catch (error) {
-      console.error(error.message)
+      console.error(error.message);
     }
+  }
+
+  // Base delete func to work with
+  // Handle: id not found, check auth/accesslevel?
+  // Better logging.. errors r ambiguous
+  async function onDeleteSubmit(data) {
+    const id = data.deleteId;
+    console.log("Deleting ID: ", id);
+    const url = `http://localhost:5555/products/${id}`;
+
+    try {
+      const response = await fetch(url, {
+        method: "DELETE",
+      });
+      console.log("Response: ", response);
+    } catch (error) {
+      console.error(error.message);
+    };
   }
 
   return (
     <>
-
       <form onSubmit={handleSubmit(onSubmit)}>
         itemName: <input {...register("itemName")} />
         <br />
@@ -40,32 +58,31 @@ function Entry() {
         <br />
         itemPrice: <input type="number"{...register("itemPrice")} />
         <br />
-        itemExpiration: <input type="date"{...register("itemExpiration")} />
+        itemExpiration: <input type="date"{...register("itemExpiration", { valueAsDate: true })} />
         <br />
         itemCount: <input type="number"{...register("itemCount", { min: 0, max: 99 })} />
         <br />
         itemImage: <input {...register("itemImage")} />
-
-        {/* name */}
-        {/* id */}
-        {/* price */}
-        {/* count */}
-        {/* image */}
-
-        {/* <select {...register("gender")}> */}
-        {/*   <option value="female">female</option> */}
-        {/*   <option value="male">male</option> */}
-        {/*   <option value="other">other</option> */}
-        {/* </select> */}
-
+        <br />
+        itemCategory: <input {...register("itemCategory")} />
         <br />
         <Button>
           <input type="submit" />
         </Button>
       </form>
+      <br />
+      <form onSubmit={handleSubmit(onDeleteSubmit)}>
+        deleteId: <input {...register("deleteId")} />
+        <Button>
+          <input type="submit" />
+        </Button>
+
+
+      </form>
+
     </>
   )
-}
+};
 
 
 export default Entry
