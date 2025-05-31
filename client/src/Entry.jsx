@@ -10,6 +10,8 @@ function Entry() {
   // console.log(watch("example"));
 
   const { register, handleSubmit } = useForm();
+  const createForm = useForm();
+  const deleteForm = useForm();
 
   async function onSubmit(data) {
     const url = "http://localhost:5555/products";
