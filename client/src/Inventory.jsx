@@ -26,7 +26,7 @@ function Inventory() {
     // setItems([...data[0]]) 
     console.log("Called getPosts() - useEffect")
     //bmindful lang abt other logs, since state updates are async, as well as in this case, the func ur calling
-  }, []) //dependency array: nothing, just run at start (when component is first rendered)
+  }, []) //dependency array: nothing, just run at start (when component is first mounted)
 
   //note: this can be defined inside useffect if once gagamitin
   //para ma avoid na rin yung pag call niya twice...
