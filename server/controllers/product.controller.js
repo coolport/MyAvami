@@ -31,7 +31,7 @@ export const postProducts = async (req, res) => {
 
   try {
     await newProduct.save();
-    console.log('REQPARAMS: ', req.params);
+    console.log('REQPARAMS: ', req.body);
     res.status(201).json({ success: true, data: newProduct });
 
   } catch (error) {
