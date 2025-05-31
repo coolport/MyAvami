@@ -12,10 +12,6 @@ function Entry() {
   const { register, handleSubmit } = useForm();
 
   async function onSubmit(data) {
-    const { id } = req.params;
-    console.log(data);
-    console.log("id: ", id);
-
     const url = "http://localhost:5555/products";
 
     try {
@@ -26,6 +22,7 @@ function Entry() {
         },
         body: JSON.stringify(data),
       });
+      console.log(response);
     } catch (error) {
       console.error(error.message);
     }
@@ -56,26 +53,25 @@ function Entry() {
         <br />
         itemDescription: <input {...register("itemDescription")} />
         <br />
-        itemPrice: <input type="number"{...register("itemPrice")} />
+        itemPrice: <input type="number" {...register("itemPrice")} />
         <br />
-        itemExpiration: <input type="date"{...register("itemExpiration", { valueAsDate: true })} />
+        itemExpiration: <input type="date" {...register("itemExpiration", { valueAsDate: true })} />
         <br />
-        itemCount: <input type="number"{...register("itemCount", { min: 0, max: 99 })} />
+        itemCount: <input type="number" {...register("itemCount", { min: 0, max: 99 })} />
         <br />
         itemImage: <input {...register("itemImage")} />
         <br />
         itemCategory: <input {...register("itemCategory")} />
         <br />
-        <Button>
-          <input type="submit" />
-        </Button>
+        <Button type="submit">Submit</Button>
       </form>
       <br />
       <form onSubmit={handleSubmit(onDeleteSubmit)}>
         deleteId: <input {...register("deleteId")} />
-        <Button>
-          <input type="submit" />
-        </Button>
+        {/* <Button> */}
+        {/*   <input type="submit" /> */}
+        {/* </Button> */}
+        <Button type="submit">Delete</Button>
 
 
       </form>

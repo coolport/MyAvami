@@ -16,6 +16,9 @@ function Navbar() {
         <Link to="/entry">
           <Button>Add Item</Button>
         </Link>
+        <Link to="/transact">
+          <Button>Transact</Button>
+        </Link>
       </HStack >
       <div>
         Navbar
