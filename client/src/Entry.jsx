@@ -9,7 +9,7 @@ function Entry() {
   // const onSubmit = data => console.log(data);
   // console.log(watch("example"));
 
-  const { register, handleSubmit } = useForm();
+  // const { register, handleSubmit } = useForm();
   const createForm = useForm();
   const deleteForm = useForm();
 
@@ -50,26 +50,26 @@ function Entry() {
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        itemName: <input {...register("itemName")} />
+      <form onSubmit={createForm.handleSubmit(onSubmit)}>
+        itemName: <input {...createForm.register("itemName")} />
         <br />
-        itemDescription: <input {...register("itemDescription")} />
+        itemDescription: <input {...createForm.register("itemDescription")} />
         <br />
-        itemPrice: <input type="number" {...register("itemPrice")} />
+        itemPrice: <input type="number" {...createForm.register("itemPrice")} />
         <br />
-        itemExpiration: <input type="date" {...register("itemExpiration", { valueAsDate: true })} />
+        itemExpiration: <input type="date" {...createForm.register("itemExpiration", { valueAsDate: true })} />
         <br />
-        itemCount: <input type="number" {...register("itemCount", { min: 0, max: 99 })} />
+        itemCount: <input type="number" {...createForm.register("itemCount", { min: 0, max: 99 })} />
         <br />
-        itemImage: <input {...register("itemImage")} />
+        itemImage: <input {...createForm.register("itemImage")} />
         <br />
-        itemCategory: <input {...register("itemCategory")} />
+        itemCategory: <input {...createForm.register("itemCategory")} />
         <br />
         <Button type="submit">Submit</Button>
-      </form>
+      </form >
       <br />
-      <form onSubmit={handleSubmit(onDeleteSubmit)}>
-        deleteId: <input {...register("deleteId")} />
+      <form onSubmit={deleteForm.handleSubmit(onDeleteSubmit)}>
+        deleteId: <input {...deleteForm.register("deleteId")} />
         {/* <Button> */}
         {/*   <input type="submit" /> */}
         {/* </Button> */}
