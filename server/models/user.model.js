@@ -13,6 +13,9 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
+      // no native enums in js but mongoose recogs it anyways
+      enum: ['admin', 'employee'],
+      default: 'employee',
       required: true
     },
   }, {
