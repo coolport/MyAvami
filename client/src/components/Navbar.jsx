@@ -10,6 +10,9 @@ function Navbar() {
         <Link to="/">
           <Button>Home</Button>
         </Link>
+        <Link to="/login">
+          <Button>Login</Button>
+        </Link>
         <Link to="/inventory">
           <Button>Inventory</Button>
         </Link>
@@ -18,6 +21,12 @@ function Navbar() {
         </Link>
         <Link to="/transact">
           <Button>Transact</Button>
+        </Link>
+        <Link to="/transacthistory">
+          <Button>Transact History</Button>
+        </Link>
+        <Link to="/notifications">
+          <Button>Notifications</Button>
         </Link>
       </HStack >
       <div>

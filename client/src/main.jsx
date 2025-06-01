@@ -6,6 +6,9 @@ import Home from './Home'
 import Inventory from './Inventory'
 import Entry from './Entry'
 import Transact from './Transact'
+import Login from './Login'
+import TransactHistory from './TransactHistory'
+import Notifications from './Notifications'
 
 import { BrowserRouter, Routes, Route } from 'react-router'
 import { Provider } from "./components/ui/provider.jsx"
@@ -22,6 +25,9 @@ createRoot(document.getElementById('root')).render(
             <Route path="inventory" element={<Inventory />} />
             <Route path="entry" element={<Entry />} />
             <Route path="transact" element={<Transact />} />
+            <Route path="transacthistory" element={<TransactHistory />} />
+            <Route path="login" element={<Login />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
         </Routes>
       </Provider>
