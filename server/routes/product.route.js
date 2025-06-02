@@ -6,9 +6,9 @@ import { getProducts, postProducts, deleteProduct, putProduct } from '../control
 const productRouter = express.Router();
 
 //Create routes
-router.get("/", getProducts);
-router.post("/", postProducts);
-router.put("/:id", putProduct);
-router.delete("/:id", deleteProduct);
+productRouter.get("/", getProducts);
+productRouter.post("/", postProducts);
+productRouter.put("/:id", putProduct);
+productRouter.delete("/:id", deleteProduct);
 
 export default productRouter;
