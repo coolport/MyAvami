@@ -30,9 +30,8 @@ app.use((req, res, next) => {
   next();
 });
 
-//pwede naman din ilagay actual routing dito
-//but better if separated yung conerns like in this case
-//where we have a routes dir and file
+// Mount x routing to these endpoints
+// signature is like ("endpoint", middleware/router)
 app.use("/products", productRouter)
 app.use("/users", userRouter)
 
