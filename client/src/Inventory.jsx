@@ -68,13 +68,12 @@ function Inventory() {
               <Card.Header>{item.itemName}</Card.Header>
               <Card.Header>PHP {item.itemPrice}</Card.Header>
               <Card.Body>{item.itemDescription}
-                <Image rounded="md" src={item.itemImage} alt="Dan Abramov" />
+                <Image rounded="md" src={item.itemImage} alt={item.itemName} />
               </Card.Body >
               <Card.Footer>
                 <Button>Edit</Button>
                 <Button>Delete</Button>
               </Card.Footer >
-
             </Stack>
           </Card.Root>
         </Box >
@@ -85,3 +84,5 @@ function Inventory() {
 
 
 export default Inventory
+
+
