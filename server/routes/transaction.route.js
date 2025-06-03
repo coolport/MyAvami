@@ -1,5 +1,6 @@
 import express from 'express';
 // import { getProducts, postProducts, deleteProduct, putProduct } from '../controllers/product.controller.js';
+import { getTransactions, postTransactions } from '../controllers/transaction.controller';
 
 const transactionRouter = express.Router();
 
