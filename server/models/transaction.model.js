@@ -1,17 +1,45 @@
 // WIP - modeling documentation is in product model
 import mongoose from 'mongoose';
 
-const userSchema = new mongoose.Schema(
+const transactionSchema = new mongoose.Schema(
   {
-    username: {
+    transactionEmployee: {
       type: String,
       required: true
+      // setup global state so u can lookup current active employee for default value
     },
-    password: {
-      type: String,
+    transactionDate: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
+    transactCart: [
+      {
+        transactionCartItemName: {
+          type: String,
+          required: true,
+          ref: 'Product'
+        },
+        transactionCartItemID: {
+          type: String,
+          required: true,
+          ref: 'Product'
+        },
+        transactionCartItemCount: {
+          type: Number,
+          required: true,
+        },
+      }
+    ],
+    transactionTotal: {
+      type: Number,
       required: true
     },
-    role: {
+    transactionDiscount: {
+      type: Boolean,
+      required: true
+    },
+    transactionPaymentMethod: {
       type: String,
       required: true
     },
@@ -19,6 +47,6 @@ const userSchema = new mongoose.Schema(
   timestamps: true
 });
 
-const User = mongoose.model('User', userSchema);
-export default User;
+const Transaction = mongoose.model('Transaction', transactionSchema);
+export default Transaction;
 
