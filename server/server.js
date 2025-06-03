@@ -2,8 +2,11 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
+
 import productRouter from "./routes/product.route.js";
 import userRouter from "./routes/user.route.js";
+import transactionRouter from './routes/transaction.route.js';
+
 import cors from "cors";
 
 // const PORT = process.env.PORT;
