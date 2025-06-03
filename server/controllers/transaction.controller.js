@@ -1,7 +1,6 @@
-import Transaction from "../models/transaction.model";
+import Transaction from "../models/transaction.model.js";
 import mongoose from 'mongoose';
 
-const url = 
 
 export const getTransactions = async (req, res) => {
   try {
