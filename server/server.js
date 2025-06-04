@@ -37,7 +37,7 @@ app.use((req, res, next) => {
 // signature is like ("endpoint", middleware/router)
 app.use("/products", productRouter)
 app.use("/users", userRouter)
-app.use("/transaction", transactionRouter)
+app.use("/transactions", transactionRouter)
 
 app.get('/test', (req, res) => {
   try {
