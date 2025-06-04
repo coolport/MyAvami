@@ -1,40 +1,31 @@
 import { useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
 import { HStack, Card, Button, Box, Stack, Image, Float } from "@chakra-ui/react"
 
-
-
 function Inventory() {
-
   const [inventory, setInventory] = useState([])
+  const [editingItem, setEditingItem] = useState(null)
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const editForm = useForm()
+
   // useEffect(() => {
-  //   const url = "http://localhost:5555/products";
-  //   async function fetchInventory() {
-  //     try {
-  //       const response = await fetch(url)
-  //       const body = await response.json(); //returns promise obj with await
-  //       console.log(body);
-  //     } catch (error) {
-  //       console.log(error.message);
-  //     }
-  //   }
-  //   fetchInventory();
-  // }, []);
-
-
-  useEffect(() => {
-    getItems()
-    // setItems([...data[0]]) 
-    console.log("Called getPosts() - useEffect")
-    //bmindful lang abt other logs, since state updates are async, as well as in this case, the func ur calling
-  }, []) //dependency array: nothing, just run at start (when component is first mounted)
+  //   getItems()
+  //   // setItems([...data[0]]) 
+  //   console.log("Called getPosts() - useEffect")
+  //   //bmindful lang abt other logs, since state updates are async, as well as in this case, the func ur calling
+  // }, []) //dependency array: nothing, just run at start (when component is first mounted)
 
   //note: this can be defined inside useffect if once gagamitin
   //para ma avoid na rin yung pag call niya twice...
   //tho u can make only the console logs there but ofc u need define shit again and refactor some code properly
   //but in this case dun mo nalang deifne lol (if u want), though its gonna be added to the dependency array
+  useEffect(() => {
+    getItems()
+    console.log("Called getItems() - useEffect")
+  }, [])
+
   async function getItems() {
     const url = "http://localhost:5555/products"
-
     try {
       const response = await fetch(url)
       if (!response.ok) {
@@ -54,35 +45,167 @@ function Inventory() {
     }
   }
 
+  function handleEdit(item) {
+    setEditingItem(item)
+    // Pre-fill the form with current values
+    editForm.reset({
+      itemName: item.itemName,
+      itemDescription: item.itemDescription,
+      itemPrice: item.itemPrice,
+      itemExpiration: item.itemExpiration ? item.itemExpiration.split('T')[0] : '', // Format date for input
+      itemCount: item.itemCount,
+      itemImage: item.itemImage,
+      itemCategory: item.itemCategory
+    })
+  }
+
+  async function onEditSubmit(data) {
+    const url = `http://localhost:5555/products/${editingItem._id}`
+    try {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+      console.log("Edit response:", response)
+      if (response.ok) {
+        setEditingItem(null)
+        getItems() // refresh items
+      }
+    } catch (error) {
+      console.error("Edit error:", error.message)
+    }
+  }
+
+  function handleDelete(item) {
+    setDeleteConfirm(item)
+  }
+
+  async function confirmDelete() {
+    const url = `http://localhost:5555/products/${deleteConfirm._id}`
+    try {
+      const response = await fetch(url, {
+        method: "DELETE",
+      })
+      console.log("Delete response:", response)
+      if (response.ok) {
+        setDeleteConfirm(null)
+        getItems() // refresh items
+      }
+    } catch (error) {
+      console.error("Delete error:", error.message)
+    }
+  }
+
+  function cancelDelete() {
+    setDeleteConfirm(null)
+  }
+
+  function cancelEdit() {
+    setEditingItem(null)
+    editForm.reset()
+  }
+
   return (
     <>
       <h1>Displaying Inventory Items:</h1>
+
+      {/* popup */}
+      {editingItem && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '5px',
+            width: '400px'
+          }}>
+            <h3>Edit Item</h3>
+            <form onSubmit={editForm.handleSubmit(onEditSubmit)}>
+              itemName: <input {...editForm.register("itemName")} />
+              <br />
+              itemDescription: <input {...editForm.register("itemDescription")} />
+              <br />
+              itemPrice: <input type="number" {...editForm.register("itemPrice")} />
+              <br />
+              itemExpiration: <input type="date" {...editForm.register("itemExpiration", { valueAsDate: true })} />
+              <br />
+              itemCount: <input type="number" {...editForm.register("itemCount", { min: 0, max: 99 })} />
+              <br />
+              itemImage: <input {...editForm.register("itemImage")} />
+              <br />
+              itemCategory: <input {...editForm.register("itemCategory")} />
+              <br />
+              <Button type="submit">Save Changes</Button>
+              <Button type="button" onClick={cancelEdit}>Cancel</Button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Popup */}
+      {deleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '5px',
+            width: '300px',
+            textAlign: 'center'
+          }}>
+            <h3>Confirm Delete</h3>
+            <p>Are you sure you want to delete "{deleteConfirm.itemName}"?</p>
+            <Button onClick={confirmDelete}>Yes, Delete</Button>
+            <Button onClick={cancelDelete}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
       <HStack scale="auto">
-        {/* <Stack> */}
       </HStack>
       {inventory.map((item, index) => (
-        <Box width="50%" bgColor={"yellow"}>
-          {/* color of container lol not visibile bc of border radius 0 */}
-          <Card.Root borderRadius={"0"} key={index}>
+        <Box width="50%" bgColor={"yellow"} key={index}>
+          {/* color of container lol not visible bc of border radius 0 */}
+          <Card.Root borderRadius={"0"}>
             <Stack>
               <Card.Header>{item.itemName}</Card.Header>
               <Card.Header>PHP {item.itemPrice}</Card.Header>
               <Card.Body>{item.itemDescription}
                 <Image rounded="md" src={item.itemImage} alt={item.itemName} />
-              </Card.Body >
+              </Card.Body>
               <Card.Footer>
-                <Button>Edit</Button>
-                <Button>Delete</Button>
-              </Card.Footer >
+                <Button onClick={() => handleEdit(item)}>Edit</Button>
+                <Button onClick={() => handleDelete(item)}>Delete</Button>
+              </Card.Footer>
             </Stack>
           </Card.Root>
-        </Box >
-      ))};
+        </Box>
+      ))}
     </>
   )
 }
 
-
 export default Inventory
-
-
