@@ -13,6 +13,33 @@ function Entry() {
   const createForm = useForm();
   const deleteForm = useForm();
 
+  async function dummySubmit() {
+    const url = "http://localhost:5555/products";
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          "itemName": "Advil",
+          "itemDescription": "Ibuprofen is a nonsteroidal anti-inflammatory drug that is used to relieve pain, fever, and inflammation. This includes painful menstrual periods, migraines, and rheumatoid arthritis. ",
+          "itemPrice": 10,
+          "itemExpiration": "2025-10-24T00:00:00.000Z",
+          "itemCount": 80,
+          "itemImage": "https://www.rosepharmacy.com/ph1/wp-content/uploads/2016/10/62550.png",
+          "itemCategory": "NSAID",
+        })
+      });
+      console.log(response);
+    } catch (error) {
+      console.error(error.message);
+    }
+  }
+
+
   async function onSubmit(data) {
     const url = "http://localhost:5555/products";
 
@@ -50,6 +77,7 @@ function Entry() {
 
   return (
     <>
+      {/* TODO: CLEAR FORM ON SUBMIT, handle onsubmit more gracefully- can spam submit with formdata  */}
       <form onSubmit={createForm.handleSubmit(onSubmit)}>
         itemName: <input {...createForm.register("itemName")} />
         <br />
@@ -74,9 +102,8 @@ function Entry() {
         {/*   <input type="submit" /> */}
         {/* </Button> */}
         <Button type="submit">Delete</Button>
-
-
       </form>
+      <Button type="submit" onClick={dummySubmit}>Submit Dummy POST req</Button>
 
     </>
   )
