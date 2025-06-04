@@ -5,18 +5,19 @@ const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      required: true
+      unique: true,
+      required: true,
     },
     password: {
       type: String,
-      required: true
+      required: true,
     },
     role: {
       type: String,
       // no native enums in js but mongoose recogs it anyways
       enum: ['admin', 'employee'],
       default: 'employee',
-      required: true
+      required: true,
     },
   }, {
   timestamps: true
