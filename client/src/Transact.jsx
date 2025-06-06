@@ -103,7 +103,7 @@ function Transact() {
             borderRadius: '5px',
             width: '400px'
           }}>
-            <h3>Add Transaction - {transactingItem.itemName}</h3>
+            <h3>Add Transaction- {transactingItem.itemName}</h3>
             <p>Price: PHP {transactingItem.itemPrice}</p>
             <form onSubmit={transactForm.handleSubmit(onTransactSubmit)}>
               Employee Name: <input {...transactForm.register("transactionEmployee", { required: true })} />
