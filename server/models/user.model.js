@@ -3,16 +3,21 @@ import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema(
   {
-    username: {
+    userUsername: {
       type: String,
       unique: true,
       required: true,
     },
-    password: {
+    userFullName: {
+      type: String,
+      unique: true,
+      required: true,
+    },
+    userPassword: {
       type: String,
       required: true,
     },
-    role: {
+    userRole: {
       type: String,
       // no native enums in js but mongoose recogs it anyways
       enum: ['admin', 'employee'],

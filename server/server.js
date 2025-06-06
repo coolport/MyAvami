@@ -1,11 +1,14 @@
 // server.js : Entrypoint
 import express from 'express';
-import dotenv from 'dotenv';
+
+// dont forget to use for prod
+// import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 
 import productRouter from "./routes/product.route.js";
 import userRouter from "./routes/user.route.js";
 import transactionRouter from './routes/transaction.route.js';
+
 
 import cors from "cors";
 
@@ -46,6 +49,23 @@ app.get('/test', (req, res) => {
     console.error("Failed with error:", error.message);
   };
 })
+
+
+
+let visits = 0;
+app.get('/', (req, res) => {
+  console.log("loaded")
+  visits += 1;
+  console.log(visits);
+  try {
+    res.json({ success: true, visits });
+  } catch (error) {
+    console.error("Error fetching: ", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+})
+
+
 
 app.listen(PORT, () => {
   connectDB();
