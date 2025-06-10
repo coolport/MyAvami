@@ -3,11 +3,13 @@ import express from 'express';
 
 // dont forget to use for prod
 // import dotenv from 'dotenv';
+
 import { connectDB } from './config/db.js';
 
 import productRouter from "./routes/product.route.js";
 import userRouter from "./routes/user.route.js";
 import transactionRouter from './routes/transaction.route.js';
+import notificationRouter from './routes/notification.route.js';
 
 
 import cors from "cors";
@@ -41,6 +43,7 @@ app.use((req, res, next) => {
 app.use("/products", productRouter)
 app.use("/users", userRouter)
 app.use("/transactions", transactionRouter)
+app.use("/notifications", notificationRouter)
 
 app.get('/test', (req, res) => {
   try {
