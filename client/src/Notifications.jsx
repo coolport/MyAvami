@@ -41,12 +41,13 @@ function Notifications() {
               <Card.Header>{notification.notificationTitle}</Card.Header>
               {/* <Card.Header>PHP {item.itemPrice}</Card.Header> */}
               <Card.Body>
-                body
+                {notification.notificationMessage}
                 {/* <Image rounded="md" src={item.itemImage} alt={item.itemName} /> */}
               </Card.Body>
               <Card.Footer>
                 {/* <Button onClick={() => handleDelete(item)}>Delete</Button> */}
-                hi
+                {notification.notificationType}
+                {notification.notificationUserInvolved}
               </Card.Footer>
             </Stack>
           </Card.Root>

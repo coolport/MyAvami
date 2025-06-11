@@ -1,4 +1,3 @@
-// WIP - modeling documentation is in product model
 import mongoose from 'mongoose';
 
 const transactionSchema = new mongoose.Schema(
