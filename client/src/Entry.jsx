@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form"
 import { Box, Button } from "@chakra-ui/react";
+import { postNotifications } from "./services/notificationService";
 
 
 
@@ -12,6 +13,7 @@ function Entry() {
   // const { register, handleSubmit } = useForm();
   const createForm = useForm();
   const deleteForm = useForm();
+
 
   async function dummySubmit() {
     const url = "http://localhost:5555/products";
@@ -103,7 +105,15 @@ function Entry() {
         {/* </Button> */}
         <Button type="submit">Delete</Button>
       </form>
-      <Button type="submit" onClick={dummySubmit}>Submit Dummy POST req</Button>
+      <Button type="submit" onClick={dummySubmit}>Submit Dummy POST req</Button><br />
+      <Button type="submit" onClick={() => {
+        postNotifications({
+          title: 'New Product Added',
+          message: "Product was added successfully.",
+          type: 'product',
+          userInvolved: "Usertest",
+        });
+      }}>post dummy notif</Button>
 
     </>
   )
