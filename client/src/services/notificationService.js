@@ -1,20 +1,36 @@
 const url = "http://localhost:5555/notifications";
 
 // destructure
-export async function postNotifications({ type, title, message, triggeredBy }) {
+export async function postNotifications({ type, title, message, userInvolved, itemInvolved }) {
 
   try {
+
+    const body = {
+      notificationType: type,
+      notificationTitle: title,
+      notificationMessage: message,
+    }
+
+    if (userInvolved) {
+      body.notificationUserInvolved = userInvolved;
+    }
+
+    if (itemInvolved) {
+      body.notificationItemInvolved = itemInvolved;
+    }
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        type,
-        title,
-        message,
-        triggeredBy,
-      })
+      body: JSON.stringify(body),
+      // body: JSON.stringify({
+      //   notificationType: type,
+      //   notificationTitle: title,
+      //   notificationMessage: message,
+      //   NotificationUser Invovled: triggeredBy,
+      // })
     })
 
     if (!response.ok) {
