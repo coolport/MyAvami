@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
-import { HStack, Card, Button, Box, Stack, Image, Float } from "@chakra-ui/react"
+import { HStack, Card, Button, Box, Stack, Image, Float, Table } from "@chakra-ui/react"
+
 
 function Inventory() {
   const [inventory, setInventory] = useState([])
@@ -127,7 +128,7 @@ function Inventory() {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: 'gray',
             padding: '20px',
             borderRadius: '5px',
             width: '400px'
@@ -155,7 +156,6 @@ function Inventory() {
         </div>
       )}
 
-      {/* Delete Confirmation Popup */}
       {deleteConfirm && (
         <div style={{
           position: 'fixed',
@@ -170,7 +170,7 @@ function Inventory() {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: 'gray',
             padding: '20px',
             borderRadius: '5px',
             width: '300px',
