@@ -18,31 +18,55 @@ export const getProducts = async (req, res) => {
 
 
 export const postProducts = async (req, res) => {
-  const product = req.body; //Return Value: Object 
-  // The req.body property is used to access the data sent by the client in POST requests. 
+  const body = req.body;
+  if (Array.isArray(body)) {
+    const isValid = body.every(p =>
+      p.itemName &&
+      p.itemDescription &&
+      p.itemPrice &&
+      p.itemExpiration &&
+      p.itemCount &&
+      p.itemImage &&
+      p.itemCategory
+    );
+    if (!isValid) {
+      return res.status(400).json({ success: false, message: "Please provide all fields for every product" });
+    }
 
-  if (!product.itemName || !product.itemDescription || !product.itemPrice || !product.itemExpiration || !product.itemCount || !product.itemImage || !product.itemCategory) {
-    return res.status(400).json({ success: false, message: "Please provide all fields" })
+    try {
+      const newProducts = await Product.insertMany(body);
+      res.status(201).json({ success: true, data: newProducts });
+    } catch (error) {
+      console.error("Error in Bulk Create Product: ", error.message);
+      res.status(500).json({ success: false, message: "Server Error (Bulk)" });
+    }
+
+  } else {
+
+    const product = req.body; //Return Value: Object 
+    // The req.body property is used to access the data sent by the client in POST requests. 
+    if (!product.itemName || !product.itemDescription || !product.itemPrice || !product.itemExpiration || !product.itemCount || !product.itemImage || !product.itemCategory) {
+      return res.status(400).json({ success: false, message: "Please provide all fields" })
+    }
+
+    const newProduct = new Product(product)
+    //create new instance of Product model using data received from the product request.
+    //aka a document. an instandce of a model is a document. aka record. see model file docs
+
+    try {
+      await newProduct.save();
+      console.log('REQPARAMS: ', req.body);
+      res.status(201).json({ success: true, data: newProduct });
+
+    } catch (error) {
+      console.error("Error in Create Product: ", error.message);
+      res.status(500).json({ success: false, message: "Server Error" });
+      //you can chain this because .status() method returns a response object.
+      //Status Code: 500
+      //Headers: Content-Type: application/json
+      //Body: '{ "success": false, "message": "Server Error" }'
+    }
   }
-
-  const newProduct = new Product(product)
-  //create new instance of Product model using data received from the product request.
-  //aka a document. an instandce of a model is a document. aka record. see model file docs
-
-  try {
-    await newProduct.save();
-    console.log('REQPARAMS: ', req.body);
-    res.status(201).json({ success: true, data: newProduct });
-
-  } catch (error) {
-    console.error("Error in Create Product: ", error.message);
-    res.status(500).json({ success: false, message: "Server Error" });
-    //you can chain this because .status() method returns a response object.
-    //Status Code: 500
-    //Headers: Content-Type: application/json
-    //Body: '{ "success": false, "message": "Server Error" }'
-  }
-
 }
 
 
