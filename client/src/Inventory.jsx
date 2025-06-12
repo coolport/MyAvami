@@ -2,7 +2,18 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { FiSearch, FiEdit2, FiTrash2, FiX } from "react-icons/fi"
 import PageHeader from "./components/PageHeader"
-import "./Inventory.css"
+import {
+  Box,
+  Flex,
+  Heading,
+  Input,
+  Table,
+  Text,
+  Image,
+  Button,
+  Spinner,
+  Badge,
+} from "@chakra-ui/react"
 
 function Inventory() {
   const [inventory, setInventory] = useState([])
@@ -135,258 +146,589 @@ function Inventory() {
   }
 
   function getStockStatus(count) {
-    if (count === 0) return { label: 'Out of Stock', className: 'stock-out' }
-    if (count <= 10) return { label: 'Low Stock', className: 'stock-low' }
-    return { label: 'In Stock', className: 'stock-in' }
+    if (count === 0) return { label: 'Out of Stock', colorScheme: 'red' }
+    if (count <= 10) return { label: 'Low Stock', colorScheme: 'orange' }
+    return { label: 'In Stock', colorScheme: 'green' }
+  }
+
+  const modalOverlayStyle = {
+    position: 'fixed',
+    inset: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+    backdropFilter: 'blur(4px)'
+  }
+
+  const modalContentStyle = {
+    backgroundColor: '#ffffff',
+    padding: '32px',
+    borderRadius: '12px',
+    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+    border: '1px solid #e2e8f0',
+    maxHeight: '90vh',
+    overflowY: 'auto'
+  }
+
+  const inputStyle = {
+    width: '100%',
+    padding: '12px 16px',
+    border: '2px solid #e2e8f0',
+    borderRadius: '8px',
+    fontSize: '14px',
+    color: '#2d3748',
+    backgroundColor: '#ffffff',
+    transition: 'all 0.2s',
+    outline: 'none'
+  }
+
+  const buttonStyle = {
+    padding: '12px 24px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    border: 'none'
+  }
+
+  const primaryButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#3182ce',
+    color: '#ffffff'
+  }
+
+  const secondaryButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#ffffff',
+    color: '#4a5568',
+    border: '2px solid #e2e8f0'
+  }
+
+  const dangerButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#e53e3e',
+    color: '#ffffff'
   }
 
   return (
-    <div className="inventory-container">
+    <>
       <PageHeader title="Inventory" />
 
+      {/* Toast Notification */}
+      {toast && (
+        <Box
+          position="fixed"
+          top={4}
+          right={4}
+          bg={toast.type === 'error' ? 'red.500' : 'green.500'}
+          color="white"
+          px={6}
+          py={3}
+          borderRadius="md"
+          boxShadow="lg"
+          zIndex={2000}
+        >
+          {toast.message}
+        </Box>
+      )}
 
-      <div className="inventory-card">
-
-        {/* Search Bar */}
-        <div className="search-container">
-          <div className="search-input-wrapper">
-            <FiSearch className="search-icon" />
-            <input
+      <Box px={8} py={6} bg="gray.50" minH="100vh">
+        {/* Search and Stats Bar */}
+        <Flex
+          mb={6}
+          justify="space-between"
+          align="center"
+          flexWrap="wrap"
+          gap={4}
+          bg="white"
+          p={6}
+          borderRadius="xl"
+          boxShadow="sm"
+          border="1px solid"
+          borderColor="gray.200"
+        >
+          <Flex align="center" flex="1" maxW="400px">
+            <FiSearch
+              style={{
+                marginRight: "12px",
+                color: "#718096",
+                fontSize: "18px"
+              }}
+            />
+            <Input
               placeholder="Search by name, description, or category..."
-              type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
+              bg="gray.50"
+              border="2px solid"
+              borderColor="gray.200"
+              color="gray.800"
+              _focus={{
+                borderColor: "blue.400",
+                boxShadow: "0 0 0 1px #3182ce"
+              }}
             />
+          </Flex>
 
-          </div>
+          <Box
+            bg="blue.50"
+            px={4}
+            py={2}
+            borderRadius="lg"
+            border="1px solid"
+            borderColor="blue.200"
+          >
+            <Text fontWeight="bold" color="blue.800">
+              Total Items: {filteredInventory.length}
+            </Text>
+          </Box>
+        </Flex>
 
-          <div className="header-right">
-            <span className="item-count">Total Items: {filteredInventory.length}</span>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="table-container">
-          <table className="inventory-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Expiration</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        {/* Main Table */}
+        <Box
+          overflowX="auto"
+          borderRadius="xl"
+          bg="white"
+          boxShadow="lg"
+          border="1px solid"
+          borderColor="gray.200"
+        >
+          <Table.Root variant="simple">
+            <Table.Header bg="gray.100">
+              <Table.Row>
+                <Table.ColumnHeader
+                  color="gray.700"
+                  fontWeight="bold"
+                  fontSize="sm"
+                  py={4}
+                >
+                  Product
+                </Table.ColumnHeader>
+                <Table.ColumnHeader
+                  color="gray.700"
+                  fontWeight="bold"
+                  fontSize="sm"
+                >
+                  Category
+                </Table.ColumnHeader>
+                <Table.ColumnHeader
+                  color="gray.700"
+                  fontWeight="bold"
+                  fontSize="sm"
+                >
+                  Price
+                </Table.ColumnHeader>
+                <Table.ColumnHeader
+                  color="gray.700"
+                  fontWeight="bold"
+                  fontSize="sm"
+                >
+                  Stock
+                </Table.ColumnHeader>
+                <Table.ColumnHeader
+                  color="gray.700"
+                  fontWeight="bold"
+                  fontSize="sm"
+                >
+                  Expiration
+                </Table.ColumnHeader>
+                <Table.ColumnHeader
+                  color="gray.700"
+                  fontWeight="bold"
+                  fontSize="sm"
+                >
+                  Actions
+                </Table.ColumnHeader>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
               {loading ? (
-                <tr>
-                  <td colSpan="6" className="loading-cell">
-                    <div className="loading-spinner"></div>
-                    Loading inventory...
-                  </td>
-                </tr>
+                <Table.Row>
+                  <Table.Cell colSpan={6} textAlign="center" py={8}>
+                    <Flex justify="center" align="center" color="gray.600">
+                      <Spinner size="sm" mr={3} />
+                      <Text>Loading inventory...</Text>
+                    </Flex>
+                  </Table.Cell>
+                </Table.Row>
               ) : filteredInventory.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="empty-cell">
-                    {searchTerm ? 'No items match your search' : 'No inventory items found'}
-                  </td>
-                </tr>
+                <Table.Row>
+                  <Table.Cell colSpan={6} textAlign="center" py={8}>
+                    <Text color="gray.500" fontSize="lg">
+                      {searchTerm
+                        ? "No items match your search"
+                        : "No inventory items found"}
+                    </Text>
+                  </Table.Cell>
+                </Table.Row>
               ) : (
                 filteredInventory.map((item, index) => {
-                  const stockStatus = getStockStatus(item.itemCount)
+                  const stockStatus = getStockStatus(item.itemCount);
                   return (
-                    <tr key={item._id || index} className="table-row">
-                      <td className="product-cell">
-                        <div className="product-info">
-                          <img
+                    <Table.Row
+                      key={item._id || index}
+                      _hover={{ bg: "gray.50" }}
+                      borderBottom="1px solid"
+                      borderColor="gray.100"
+                    >
+                      <Table.Cell py={4}>
+                        <Flex align="center">
+                          <Image
                             src={item.itemImage}
                             alt={item.itemName}
-                            className="product-image"
-                            onError={(e) => {
-                              e.target.src = "https://via.placeholder.com/50"
-                            }}
+                            boxSize="60px"
+                            borderRadius="lg"
+                            mr={4}
+                            fallbackSrc="https://via.placeholder.com/60"
+                            border="2px solid"
+                            borderColor="gray.200"
                           />
-                          <div className="product-details">
-                            <div className="product-name">{item.itemName}</div>
-                            <div className="product-description">{item.itemDescription}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="category-badge">{item.itemCategory}</span>
-                      </td>
-                      <td>
-                        <span className="price">{formatPrice(item.itemPrice)}</span>
-                      </td>
-                      <td>
-                        <div className="stock-info">
-                          <div className="stock-count">{item.itemCount}</div>
-                          <span className={`stock-badge ${stockStatus.className}`}>
+                          <Box>
+                            <Text
+                              fontWeight="semibold"
+                              color="gray.800"
+                              fontSize="md"
+                            >
+                              {item.itemName}
+                            </Text>
+                            <Text
+                              fontSize="sm"
+                              color="gray.500"
+                              mt={1}
+                            >
+                              {item.itemDescription}
+                            </Text>
+                          </Box>
+                        </Flex>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Badge
+                          colorScheme="purple"
+                          variant="subtle"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          fontWeight="medium"
+                        >
+                          {item.itemCategory}
+                        </Badge>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Text
+                          fontWeight="bold"
+                          color="gray.800"
+                          fontSize="md"
+                        >
+                          {formatPrice(item.itemPrice)}
+                        </Text>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Box>
+                          <Text
+                            fontWeight="bold"
+                            color="gray.800"
+                            fontSize="lg"
+                          >
+                            {item.itemCount}
+                          </Text>
+                          <Badge
+                            colorScheme={stockStatus.colorScheme}
+                            variant="subtle"
+                            mt={1}
+                            px={2}
+                            py={1}
+                            borderRadius="md"
+                            fontSize="xs"
+                          >
                             {stockStatus.label}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="expiration-cell">
-                        {formatDate(item.itemExpiration)}
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className="action-btn edit-btn"
+                          </Badge>
+                        </Box>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Text color="gray.700">
+                          {formatDate(item.itemExpiration)}
+                        </Text>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Flex gap={2}>
+                          <Button
+                            size="sm"
+                            colorScheme="blue"
                             onClick={() => handleEdit(item)}
-                            title="Edit item"
+                            leftIcon={<FiEdit2 />}
+                            variant="solid"
                           >
-                            <FiEdit2 />
-                          </button>
-                          <button
-                            className="action-btn delete-btn"
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            colorScheme="red"
                             onClick={() => handleDelete(item)}
-                            title="Delete item"
+                            leftIcon={<FiTrash2 />}
+                            variant="solid"
                           >
-                            <FiTrash2 />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
+                            Delete
+                          </Button>
+                        </Flex>
+                      </Table.Cell>
+                    </Table.Row>
+                  );
                 })
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </Table.Body>
+          </Table.Root>
+        </Box>
 
-      {/* Edit Modal */}
-      {editingItem && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Edit Product</h2>
-              <button
-                className="modal-close-btn"
-                onClick={() => setEditingItem(null)}
-              >
-                <FiX />
-              </button>
-            </div>
-
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="edit-form">
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Product Name</label>
-                  <input
-                    type="text"
-                    {...editForm.register("itemName", { required: true })}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Description</label>
-                  <input
-                    type="text"
-                    {...editForm.register("itemDescription", { required: true })}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Price (PHP)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    {...editForm.register("itemPrice", { required: true, min: 0 })}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Stock Count</label>
-                  <input
-                    type="number"
-                    {...editForm.register("itemCount", { required: true, min: 0, max: 999 })}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Category</label>
-                  <input
-                    type="text"
-                    {...editForm.register("itemCategory", { required: true })}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Expiration Date</label>
-                  <input
-                    type="date"
-                    {...editForm.register("itemExpiration")}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group full-width">
-                  <label>Image URL</label>
-                  <input
-                    type="url"
-                    {...editForm.register("itemImage", { required: true })}
-                    className="form-input"
-                  />
-                </div>
+        {/* Edit Modal */}
+        {editingItem && (
+          <div style={modalOverlayStyle}>
+            <div style={{ ...modalContentStyle, width: '500px' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '24px'
+              }}>
+                <h2 style={{
+                  margin: 0,
+                  fontSize: '24px',
+                  fontWeight: '700',
+                  color: '#2d3748'
+                }}>
+                  Edit Product
+                </h2>
+                <button
+                  onClick={() => setEditingItem(null)}
+                  style={{
+                    border: 'none',
+                    background: '#f7fafc',
+                    borderRadius: '8px',
+                    width: '40px',
+                    height: '40px',
+                    fontSize: '20px',
+                    cursor: 'pointer',
+                    color: '#4a5568',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <FiX />
+                </button>
               </div>
 
-              <div className="modal-footer">
+              <form
+                onSubmit={editForm.handleSubmit(onEditSubmit)}
+                style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+              >
+                <div>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '8px',
+                    fontWeight: '600',
+                    color: '#2d3748',
+                    fontSize: '14px'
+                  }}>
+                    Product Name *
+                  </label>
+                  <input
+                    {...editForm.register("itemName", { required: true })}
+                    placeholder="Enter product name"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '8px',
+                    fontWeight: '600',
+                    color: '#2d3748',
+                    fontSize: '14px'
+                  }}>
+                    Description *
+                  </label>
+                  <input
+                    {...editForm.register("itemDescription", { required: true })}
+                    placeholder="Enter description"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      fontWeight: '600',
+                      color: '#2d3748',
+                      fontSize: '14px'
+                    }}>
+                      Price (PHP) *
+                    </label>
+                    <input
+                      {...editForm.register("itemPrice", { required: true })}
+                      type="number"
+                      placeholder="0.00"
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      fontWeight: '600',
+                      color: '#2d3748',
+                      fontSize: '14px'
+                    }}>
+                      Stock Count *
+                    </label>
+                    <input
+                      {...editForm.register("itemCount", { required: true })}
+                      type="number"
+                      placeholder="0"
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '8px',
+                    fontWeight: '600',
+                    color: '#2d3748',
+                    fontSize: '14px'
+                  }}>
+                    Category *
+                  </label>
+                  <input
+                    {...editForm.register("itemCategory", { required: true })}
+                    placeholder="Enter category"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '8px',
+                    fontWeight: '600',
+                    color: '#2d3748',
+                    fontSize: '14px'
+                  }}>
+                    Expiration Date
+                  </label>
+                  <input
+                    {...editForm.register("itemExpiration")}
+                    type="date"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '8px',
+                    fontWeight: '600',
+                    color: '#2d3748',
+                    fontSize: '14px'
+                  }}>
+                    Image URL *
+                  </label>
+                  <input
+                    {...editForm.register("itemImage", { required: true })}
+                    type="url"
+                    placeholder="https://example.com/image.jpg"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '12px',
+                  marginTop: '24px'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    style={secondaryButtonStyle}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    style={primaryButtonStyle}
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirm && (
+          <div style={modalOverlayStyle}>
+            <div style={{ ...modalContentStyle, width: '450px' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{
+                  margin: '0 0 16px 0',
+                  fontSize: '20px',
+                  fontWeight: '700',
+                  color: '#2d3748'
+                }}>
+                  Delete Product
+                </h3>
+                <p style={{
+                  margin: '0 0 12px 0',
+                  color: '#4a5568',
+                  fontSize: '16px',
+                  lineHeight: '1.5'
+                }}>
+                  Are you sure you want to delete{' '}
+                  <strong style={{ color: '#2d3748' }}>
+                    {deleteConfirm.itemName}
+                  </strong>?
+                </p>
+                <p style={{
+                  color: '#e53e3e',
+                  margin: '12px 0 0 0',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}>
+                  This action cannot be undone.
+                </p>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px'
+              }}>
                 <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setEditingItem(null)}
+                  onClick={() => setDeleteConfirm(null)}
+                  style={secondaryButtonStyle}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Save Changes
+                <button
+                  onClick={confirmDelete}
+                  style={dangerButtonStyle}
+                >
+                  Delete Product
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deleteConfirm && (
-        <div className="modal-overlay">
-          <div className="modal-content modal-small">
-            <div className="modal-header">
-              <h2>Delete Product</h2>
-            </div>
-
-            <div className="modal-body">
-              <p>Are you sure you want to delete "<strong>{deleteConfirm.itemName}</strong>"?</p>
-              <p className="warning-text">This action cannot be undone.</p>
-            </div>
-
-            <div className="modal-footer">
-              <button
-                className="btn btn-secondary"
-                onClick={() => setDeleteConfirm(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-danger"
-                onClick={confirmDelete}
-              >
-                Delete
-              </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </Box>
+    </>
   )
 }
 

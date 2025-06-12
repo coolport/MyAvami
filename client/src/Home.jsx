@@ -19,7 +19,7 @@ const features = [
   { label: 'Transact', icon: FiShoppingCart, path: '/sales' },
   { label: 'Transaction History', icon: FiClock, path: '/transacthistory' },
   { label: 'Notifications', icon: FiBell, path: '/notifications' },
-  { label: 'OldTransact', icon: FiShoppingCart, path: '/entry' },
+  // { label: 'OldTransact', icon: FiShoppingCart, path: '/entry' },
   { label: 'Reports', icon: FiBarChart2, path: '/reports' },
   { label: 'Maintenance', icon: FiTool, path: '/maintenance' },
   { label: 'Help', icon: FiHelpCircle, path: '/help' },
