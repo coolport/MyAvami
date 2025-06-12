@@ -10,6 +10,8 @@ import Login from './Login'
 import TransactHistory from './TransactHistory'
 import Notifications from './Notifications'
 
+import Sales from './Sale'
+
 import { BrowserRouter, Routes, Route } from 'react-router'
 import { Provider } from "./components/ui/provider.jsx"
 
@@ -27,6 +29,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="transacthistory" element={<TransactHistory />} />
           <Route path="login" element={<Login />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="sales" element={<Sales />} />
         </Route>
       </Routes>
     </Provider>
