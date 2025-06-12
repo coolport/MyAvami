@@ -29,6 +29,9 @@ function Navbar() {
         <Link to="/notifications">
           <Button>Notifications</Button>
         </Link>
+        <Link to="/sales">
+          <Button>Sale</Button>
+        </Link>
       </HStack >
     </>
   )
