@@ -26,18 +26,24 @@ function TransactHistory() {
   }
 
   function handleDelete(transaction) {
+    // Put selected item in the deleteConfirm state, will render
+    // the popup, n be target in confirmDelete
     setDeleteConfirm(transaction)
   }
 
   async function confirmDelete() {
     const url = `http://localhost:5555/transactions/${deleteConfirm._id}`
+    console.log("deleteConfirm: ", deleteConfirm)
     try {
       const response = await fetch(url, {
         method: "DELETE",
       })
       console.log("Delete response:", response)
       if (response.ok) {
+        // IF GOODS
+        // 1. reset deleteConfirm state, unmountingit, and remove item focus
         setDeleteConfirm(null)
+        // 2. REFRESH LIST!
         getTransactions()
         alert("Transaction deleted")
       }
