@@ -6,6 +6,7 @@ function Navbar() {
   return (
     <>
       {/* quick implementation, todo: use useNavigate hook instead of Link so useNavigate(-1) function etc can be used */}
+      DEV NAVBAR
       <HStack>
         <Link to="/">
           <Button>Home</Button>
@@ -29,9 +30,6 @@ function Navbar() {
           <Button>Notifications</Button>
         </Link>
       </HStack >
-      <div>
-        Navbar
-      </div>
     </>
   )
 }
