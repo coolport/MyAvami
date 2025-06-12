@@ -13,6 +13,7 @@ const PageHeader = ({ title }) => {
 
   return (
     <Flex
+      height={"60px"}
       as="header"
       justify="space-between"
 

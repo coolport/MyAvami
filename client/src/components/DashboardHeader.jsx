@@ -13,6 +13,7 @@ const DashboardHeader = ({ userType = "Admin" }) => {
 
   return (
     <Flex
+      height={"60px"}
       as="header"
       justify="space-between"
       align="center"
