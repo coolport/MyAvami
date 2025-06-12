@@ -315,7 +315,7 @@ const Sale = () => {
     display: 'flex',
     padding: '24px',
     gap: '32px',
-    backgroundColor: '#f7fafc',
+    backgroundColor: '#ECF1EA',
     minHeight: '100vh',
     flexWrap: 'wrap'
   };
