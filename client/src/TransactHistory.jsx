@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Stack, Card, Button, Box } from "@chakra-ui/react"
+import PageHeader from "./components/PageHeader"
 
 function TransactHistory() {
   const [transactions, setTransactions] = useState([])
@@ -62,6 +63,7 @@ function TransactHistory() {
 
   return (
     <>
+      <PageHeader title={"Transaction History"} />
       <h1>Transaction History</h1>
 
       {/* Delete PopUp */}

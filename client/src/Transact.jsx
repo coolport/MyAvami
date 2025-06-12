@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { Stack, HStack, Card, Button, Box, Image } from "@chakra-ui/react"
+import PageHeader from "./components/PageHeader"
 
 function Transact() {
   const [inventory, setInventory] = useState([])
@@ -82,6 +83,7 @@ function Transact() {
 
   return (
     <>
+      <PageHeader title={"Transact"} />
       <h1>Test Transact</h1>
 
       {transactingItem && (

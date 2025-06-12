@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { HStack, Card, Button, Box, Stack, Image, Float, Table } from "@chakra-ui/react"
+// import Navbar from "./components/Navbar"
+import PageHeader from "./components/PageHeader"
 
 
 function Inventory() {
@@ -107,6 +109,7 @@ function Inventory() {
 
   return (
     <>
+      <PageHeader title={"Inventory"} />
       <h1>Displaying Inventory Items:</h1>
 
       {/* popup */}

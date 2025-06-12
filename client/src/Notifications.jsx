@@ -1,5 +1,6 @@
 import { HStack, Card, Button, Box, Stack, Image, Float, Table } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
+import PageHeader from "./components/PageHeader";
 
 function Notifications() {
 
@@ -67,8 +68,10 @@ function Notifications() {
 
   return (
     <>
+      <PageHeader title={"Notifications"} />
 
       {/* DELETE POPUP conditional */}
+      {/* TODO: replace all conditionals with ternary oprtr instead of this syntax ???? */}
       {deleteConfirm && (
         <div style={{
           position: 'fixed',

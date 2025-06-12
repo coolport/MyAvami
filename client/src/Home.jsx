@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Button } from "@chakra-ui/react";
 import { useEffect } from "react";
+import { Box } from "@chakra-ui/react";
 
 function Home() {
   const [clicks, updateClick] = useState(0);
@@ -31,10 +32,12 @@ function Home() {
 
   return (
     <>
-      <h1>Home Screen Placeholder</h1>
-      <p>{clicks}</p>
-      <Button onClick={changeClick}>Update</Button>
-      <h2>Visits: {visits}</h2>
+      <Box background={"gray"} height={"100vh"}>
+        <h1>Home Screen Placeholder</h1>
+        <p>{clicks}</p>
+        <Button onClick={changeClick}>Update</Button>
+        <h2>Visits: {visits}</h2>
+      </Box>
     </>
   )
 }

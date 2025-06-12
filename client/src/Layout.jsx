@@ -7,7 +7,7 @@ function Layout() {
   return (
     <>
       <Navbar />
-      <Box minH={"100vh"} bgColor={"darkslateblue"}>
+      <Box minH={"100vh"} bgColor={"#F3F8F9"}>
         <Outlet />
       </Box >
     </>
