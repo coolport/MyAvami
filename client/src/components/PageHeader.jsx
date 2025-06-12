@@ -29,7 +29,13 @@ const PageHeader = ({ title }) => {
     // boxShadow="md"
     >
       <div>
-        <Button variant={"outline"} color="white" onClick={() => navigate(-1)} >
+        <Button variant="ghost"
+          _hover={{
+            transform: 'translateY(-4px)',
+            bg: 'transparent',
+            color: 'white'
+          }}
+          color="white" onClick={() => navigate(-1)} >
           <Icon boxSize="5" as={FiArrowLeft} />Back
         </Button>
       </div>
@@ -38,8 +44,15 @@ const PageHeader = ({ title }) => {
       {/* </Button> */}
 
       <Heading size="md">{title}</Heading>
-      <Button variant="outline" onClick={() => { navigate("/") }}>
-        <Image src={avamiLogoWhite} alt="Logo" height="2rem" />
+      <Button variant="ghost"
+        _hover={{
+          transform: 'translateY(-4px)',
+          bg: 'transparent',
+          color: 'white'
+        }}
+        onClick={() => { navigate("/") }}>
+        <Image src={avamiLogoWhite}
+          alt="Logo" height="2rem" />
       </Button>
     </Flex >
   );
