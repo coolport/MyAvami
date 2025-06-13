@@ -159,14 +159,14 @@ function Inventory() {
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
-    backdropFilter: 'blur(4px)'
+    backdropFilter: '0'
   }
 
   const modalContentStyle = {
     backgroundColor: '#ffffff',
     padding: '32px',
     borderRadius: '12px',
-    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+    boxShadow: '0',
     border: '1px solid #e2e8f0',
     maxHeight: '90vh',
     overflowY: 'auto'
@@ -387,6 +387,7 @@ function Inventory() {
                             borderColor="gray.200"
                           />
                           <Box>
+                            {/* PRODUCT NAME  */}
                             <Text
                               fontWeight="semibold"
                               color="gray.800"
@@ -459,7 +460,9 @@ function Inventory() {
                             colorScheme="blue"
                             onClick={() => handleEdit(item)}
                             leftIcon={<FiEdit2 />}
-                            variant="solid"
+                            _hover={{ bg: "lightskyblue" }}
+                            variant="outline"
+                            color="black"
                           >
                             Edit
                           </Button>
@@ -468,7 +471,9 @@ function Inventory() {
                             colorScheme="red"
                             onClick={() => handleDelete(item)}
                             leftIcon={<FiTrash2 />}
-                            variant="solid"
+                            variant="outline"
+                            color="black"
+                            _hover={{ bg: "lightskyblue" }}
                           >
                             Delete
                           </Button>

@@ -114,7 +114,6 @@ function Notifications() {
             bg='white'
             padding={6}
             borderRadius='xl'
-            boxShadow='2xl'
             width='400px'
             maxWidth='90vw'
           >
@@ -137,13 +136,18 @@ function Notifications() {
               </Box>
               <HStack spacing={3} width='100%'>
                 <Button
+                  variant="outline"
                   colorScheme='red'
                   onClick={confirmDelete}
                   flex={1}
+                  color="black"
+                  _hover={{ bg: "lightskyblue" }}
                 >
                   Delete
                 </Button>
                 <Button
+                  _hover={{ bg: "lightskyblue" }}
+                  color="black"
                   variant='outline'
                   onClick={cancelDelete}
                   flex={1}
