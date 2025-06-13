@@ -231,11 +231,11 @@ function Notifications() {
                       </HStack>
                       <IconButton
                         className={styles.deleteButton}
-                        icon={<IoClose />}
+                        as={IoClose}
                         onClick={() => handleDelete(notification)}
                         aria-label="Delete notification"
                         size="sm"
-                        variant="ghost"
+                        variant="outline"
                         colorScheme="red"
                       />
                     </HStack>
