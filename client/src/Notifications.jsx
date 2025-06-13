@@ -1,262 +1,273 @@
-import { HStack, Card, Button, Box, Stack, Image, Float, Table, Text, Badge, IconButton, VStack } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
-import PageHeader from "./components/PageHeader";
+import {
+  Box,
+  Button,
+  Text,
+  Dialog,
+  Badge,
+  IconButton,
+  VStack,
+  HStack,
+  Spacer,
+} from "@chakra-ui/react"
+import { Toaster, toaster } from "./components/ui/toaster.jsx"
+import { IoClose } from "react-icons/io5";
+import PageHeader from "./components/PageHeader"
+import styles from './styles/Notification.module.css'
 
 function Notifications() {
-
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState([])
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   function handleDelete(notification) {
-    // Put selected item in the deleteConfirm state, will render
-    // the popup, n be target in confirmDelete
     setDeleteConfirm(notification)
+    setIsDialogOpen(true)
   }
 
   async function confirmDelete() {
-    const url = `http://localhost:5555/notifications/${deleteConfirm._id}`;
+    const url = `http://localhost:5555/notifications/${deleteConfirm._id}`
     console.log("deleteConfirm: ", deleteConfirm)
-    console.log("Deleting ID:", deleteConfirm?._id);
+    console.log("Deleting ID:", deleteConfirm?._id)
+
     try {
       const response = await fetch(url, {
         method: "DELETE",
-      });
-      console.log("DELETE RESPONSE OBJ: ", response);
+      })
+      console.log("DELETE RESPONSE OBJ: ", response)
 
       if (response.ok) {
-        // IF GOODS
-        // 1. reset deleteConfirm state, unmountingit, and remove notif focus
-        setDeleteConfirm(null);
-        // 2. REFRESH LIST!
-        getNotifications();
-        alert("Notification Deleted");
+        setDeleteConfirm(null)
+        setIsDialogOpen(false)
+        getNotifications()
+        toaster.create({
+          title: "Notification deleted",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        })
       }
     } catch (error) {
-      console.error("Delete error: ", error.message);
+      console.error("Delete error: ", error.message)
+      toaster.create({
+        title: "Error deleting notification",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      })
     }
   }
 
   function cancelDelete() {
     setDeleteConfirm(null)
+    setIsDialogOpen(false)
   }
 
   async function getNotifications() {
-    const url = "http://localhost:5555/notifications";
+    const url = "http://localhost:5555/notifications"
     try {
-      const response = await fetch(url);
-      const json = await response.json();
-      const notificationsJSON = json.data;
+      const response = await fetch(url)
+      const json = await response.json()
+      const notificationsJSON = json.data
 
-      const updatedArray = [];
+      const updatedArray = []
       for (const x in notificationsJSON) {
-        updatedArray.push(notificationsJSON[x]);
+        updatedArray.push(notificationsJSON[x])
       }
 
       // Reverse the array to show latest first
-      const reversedArray = updatedArray.reverse();
-      console.log("Updated Array (latest first): ", reversedArray);
-      setNotifications(reversedArray);
+      const reversedArray = updatedArray.reverse()
+      console.log("Updated Array (latest first): ", reversedArray)
+      setNotifications(reversedArray)
     } catch (error) {
-      console.error("Server error:", error.message);
+      console.error("Server error:", error.message)
+      toaster.create({
+        title: "Error fetching notifications",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      })
     }
   }
 
-  // Function to get notification type color and variant
-  const getNotificationStyle = (type) => {
+  // Function to get notification type class name
+  const getNotificationClassName = (type) => {
     switch (type?.toLowerCase()) {
       case 'success':
-        return { colorScheme: 'green', variant: 'subtle' };
+        return 'success'
       case 'warning':
-        return { colorScheme: 'orange', variant: 'subtle' };
+        return 'warning'
       case 'error':
-        return { colorScheme: 'red', variant: 'subtle' };
+        return 'error'
       case 'info':
-        return { colorScheme: 'blue', variant: 'subtle' };
+        return 'info'
       default:
-        return { colorScheme: 'gray', variant: 'subtle' };
+        return 'default'
     }
-  };
+  }
+
+  // Function to get badge color scheme
+  const getBadgeColorScheme = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'success':
+        return 'green'
+      case 'warning':
+        return 'orange'
+      case 'error':
+        return 'red'
+      case 'info':
+        return 'blue'
+      default:
+        return 'gray'
+    }
+  }
 
   // Function to format date/time if available
   const formatDate = (dateString) => {
-    if (!dateString) return '';
+    if (!dateString) return ''
     try {
-      return new Date(dateString).toLocaleString();
+      return new Date(dateString).toLocaleString()
     } catch {
-      return dateString;
+      return dateString
     }
-  };
+  }
 
   useEffect(() => {
-    getNotifications();
+    getNotifications()
     console.log("getNotifications() Triggered")
   }, [])
 
   return (
     <>
       <PageHeader title={"Notifications"} />
-
+      <Toaster />
       {/* DELETE CONFIRMATION MODAL */}
-      {deleteConfirm && (
-        <Box
-          position='fixed'
-          top={0}
-          left={0}
-          width='100%'
-          height='100%'
-          bg='blackAlpha.600'
-          display='flex'
-          justifyContent='center'
-          alignItems='center'
-          zIndex={1000}
-        >
-          <Card.Root
-            bg='white'
-            padding={6}
-            borderRadius='xl'
-            width='400px'
-            maxWidth='90vw'
-          >
-            <VStack spacing={4}>
-              <Text fontSize='xl' fontWeight='bold' color='red.600'>
-                Confirm Delete
-              </Text>
-              <Text textAlign='center' color='gray.600'>
+      <Dialog.Root open={isDialogOpen} onOpenChange={({ open }) => setIsDialogOpen(open)}>
+        <Dialog.Backdrop className={styles.modalOverlay} />
+        <Dialog.Positioner>
+          <Dialog.Content className={styles.modalCard}>
+            <Dialog.Header className={styles.modalTitle}>
+              <Dialog.Title>Confirm Delete</Dialog.Title>
+              <Dialog.CloseTrigger onClick={cancelDelete} />
+            </Dialog.Header>
+            <Dialog.Body className={styles.modalContent}>
+              <Text className={styles.modalDescription}>
                 Are you sure you want to delete this notification?
               </Text>
-              <Box
-                p={4}
-                bg='gray.50'
-                borderRadius='lg'
-                width='100%'
+              {deleteConfirm && (
+                <Box className={styles.modalNotificationPreview}>
+                  <Text className={styles.modalNotificationTitle}>
+                    {deleteConfirm.notificationTitle}
+                  </Text>
+                </Box>
+              )}
+            </Dialog.Body>
+            <Dialog.Footer className={styles.modalButtons}>
+              <Button
+                className={`${styles.modalButton} ${styles.modalDeleteButton}`}
+                onClick={confirmDelete}
+                colorScheme="red"
+                mr={3}
               >
-                <Text fontWeight='semibold' color='gray.800' textAlign='center'>
-                  {deleteConfirm.notificationTitle}
-                </Text>
-              </Box>
-              <HStack spacing={3} width='100%'>
-                <Button
-                  variant="outline"
-                  colorScheme='red'
-                  onClick={confirmDelete}
-                  flex={1}
-                  color="black"
-                  _hover={{ bg: "lightskyblue" }}
-                >
-                  Delete
-                </Button>
-                <Button
-                  _hover={{ bg: "lightskyblue" }}
-                  color="black"
-                  variant='outline'
-                  onClick={cancelDelete}
-                  flex={1}
-                >
-                  Cancel
-                </Button>
-              </HStack>
-            </VStack>
-          </Card.Root>
-        </Box>
-      )}
+                Delete
+              </Button>
+              <Button
+                className={styles.modalButton}
+                onClick={cancelDelete}
+                variant="outline"
+              >
+                Cancel
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
 
       {/* NOTIFICATIONS CONTAINER */}
-      <Box maxWidth="800px" margin="0 auto" padding={8}>
+      <Box className={styles.container}>
         {notifications.length === 0 ? (
-          <Card.Root textAlign="center" padding={12} borderRadius="xl">
-            <VStack spacing={4}>
-              <Text fontSize="xl" color="gray.500" fontWeight="medium">
+          <Box className={styles.emptyState}>
+            <VStack className={styles.emptyStateContent} spacing={4}>
+              <Text className={styles.emptyStateTitle} fontSize="xl" fontWeight="bold">
                 No notifications found
               </Text>
-              <Text color="gray.400">
+              <Text className={styles.emptyStateDescription} color="gray.500">
                 Notifications will appear here when system events occur
               </Text>
             </VStack>
-          </Card.Root>
+          </Box>
         ) : (
-          <VStack spacing={6} align="stretch">
+          <VStack className={styles.notificationsList} spacing={4} align="stretch">
             {notifications.map((notification, index) => {
-              const notificationStyle = getNotificationStyle(notification.notificationType);
+              const notificationClass = getNotificationClassName(notification.notificationType)
+              const badgeColorScheme = getBadgeColorScheme(notification.notificationType)
 
               return (
-                <Card.Root
+                <Box
                   key={notification._id || index}
-                  borderRadius="xl"
-                  borderWidth="1px"
-                  borderColor="gray.200"
+                  className={`${styles.notificationCard} ${styles[notificationClass]}`}
+                  borderRadius="md"
+                  shadow="sm"
                   overflow="hidden"
-                  bg="white"
-                  _hover={{
-                    transform: 'translateY(-2px)',
-                    borderColor: `${notificationStyle.colorScheme}.300`,
-                    transition: 'all 0.3s ease'
-                  }}
-                  height="fit-content"
                 >
                   {/* Header */}
-                  <Card.Header bg="gray.50" pb={3}>
-                    <HStack justify="space-between" align="flex-start">
-                      <VStack align="flex-start" spacing={2} flex={1}>
-                        <Text
-                          fontSize="lg"
-                          fontWeight="bold"
-                          color="gray.800"
-                          lineHeight="short"
-                        >
+                  <Box className={styles.cardHeader}>
+                    <HStack className={styles.cardHeaderContent} spacing={4}>
+                      <HStack className={styles.cardHeaderLeft} spacing={3} flex={1}>
+                        <Text className={styles.cardTitle} fontWeight="semibold" fontSize="lg">
                           {notification.notificationTitle}
                         </Text>
                         {notification.notificationType && (
                           <Badge
-                            {...notificationStyle}
-                            textTransform="capitalize"
+                            className={`${styles.badge} ${styles[notificationClass]}`}
+                            colorScheme={badgeColorScheme}
+                            variant="subtle"
                           >
                             {notification.notificationType}
                           </Badge>
                         )}
-                      </VStack>
+                      </HStack>
                       <IconButton
+                        className={styles.deleteButton}
+                        icon={<IoClose />}
+                        onClick={() => handleDelete(notification)}
+                        aria-label="Delete notification"
                         size="sm"
                         variant="ghost"
                         colorScheme="red"
-                        onClick={() => handleDelete(notification)}
-                        aria-label="Delete notification"
-                      >
-                        ×
-                      </IconButton>
+                      />
                     </HStack>
-                  </Card.Header>
+                  </Box>
 
                   {/* Body */}
-                  <Card.Body py={4}>
-                    <VStack align="flex-start" spacing={3}>
-                      <Text
-                        color="gray.700"
-                        fontSize="md"
-                        lineHeight="relaxed"
-                      >
+                  <Box className={styles.cardBody}>
+                    <VStack className={styles.cardBodyContent} align="start" spacing={3}>
+                      <Text className={styles.cardMessage}>
                         {notification.notificationMessage}
                       </Text>
 
                       {notification.notificationUserInvolved && (
-                        <HStack>
-                          <Text fontSize="sm" color="gray.500" fontWeight="medium" minW="12">
+                        <HStack className={styles.userInfo} spacing={2}>
+                          <Text className={styles.userLabel} fontWeight="medium" color="gray.600">
                             User:
                           </Text>
-                          <Text fontSize="sm" color="gray.700" fontWeight="semibold">
+                          <Text className={styles.userName} fontWeight="semibold">
                             {notification.notificationUserInvolved}
                           </Text>
                         </HStack>
                       )}
 
                       {notification.createdAt && (
-                        <Text fontSize="sm" color="gray.600">
+                        <Text className={styles.timestamp} fontSize="sm" color="gray.500">
                           {formatDate(notification.createdAt)}
                         </Text>
                       )}
                     </VStack>
-                  </Card.Body>
-                </Card.Root>
-              );
+                  </Box>
+                </Box>
+              )
             })}
           </VStack>
         )}
