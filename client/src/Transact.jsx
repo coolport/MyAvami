@@ -123,7 +123,7 @@ function Transact() {
               Discount: <input type="checkbox" {...transactForm.register("transactionDiscount")} />
               <br />
               <br />
-              <Button type="submit">Add Transaction</Button>
+              <Button type="submit">ADD TRANSACTION</Button>
               <Button type="button" onClick={cancelTransact}>Cancel</Button>
             </form>
           </div>
