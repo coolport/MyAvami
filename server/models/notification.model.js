@@ -14,7 +14,7 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    notificationUserInvovled: {
+    notificationUserInvolved: {
       type: String,
       required: false,
     },

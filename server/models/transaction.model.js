@@ -37,6 +37,10 @@ const transactionSchema = new mongoose.Schema(
       type: Number,
       required: true
     },
+    transactionAmountPaid: {
+      type: Number,
+      required: true
+    },
     transactionDiscount: {
       type: Boolean,
       required: true
