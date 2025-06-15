@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { FiSearch, FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiCreditCard, FiUser, FiTag, FiDollarSign } from "react-icons/fi";
 import PageHeader from "./components/PageHeader";
 import { postNotifications } from "./services/notificationService"; // Adjust path as needed
+import styles from "./styles/Sale.module.css";
 
 const Sale = () => {
   const [products, setProducts] = useState([]);
@@ -16,46 +17,6 @@ const Sale = () => {
 
   useEffect(() => {
     fetchProducts();
-
-    const style = document.createElement('style');
-    style.textContent = `
-      .product-card {
-        transition: all 0.2s ease !important;
-      }
-      
-      .product-card:hover {
-        border-color: #3182ce !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
-      }
-      
-      .add-to-cart-btn {
-        transition: all 0.2s ease !important;
-      }
-      
-      .add-to-cart-btn:hover:not(:disabled) {
-        background-color: #2c5aa0 !important;
-        transform: scale(1.02) !important;
-      }
-      
-      .cart-btn:hover {
-        background-color: #2c5aa0 !important;
-      }
-      
-      .secondary-btn:hover {
-        background-color: #cbd5e0 !important;
-      }
-      
-      .danger-btn:hover {
-        background-color: #c53030 !important;
-      }
-    `;
-    document.head.appendChild(style);
-
-    return () => {
-      // Clean up style when component unmounts
-      document.head.removeChild(style);
-    };
   }, []);
 
   const showToast = (message, type = 'success') => {
@@ -299,9 +260,9 @@ const Sale = () => {
   };
 
   const getStockStatus = (count) => {
-    if (count === 0) return { label: 'Out of Stock', className: 'stock-out', color: '#e53e3e' };
-    if (count <= 10) return { label: 'Low Stock', className: 'stock-low', color: '#dd6b20' };
-    return { label: 'In Stock', className: 'stock-in', color: '#38a169' };
+    if (count === 0) return { label: 'Out of Stock', color: '#e53e3e' };
+    if (count <= 10) return { label: 'Low Stock', color: '#dd6b20' };
+    return { label: 'In Stock', color: '#38a169' };
   };
 
   const calculateChange = () => {
@@ -310,237 +271,67 @@ const Sale = () => {
     return Math.max(0, amountPaid - finalTotal);
   };
 
-  // Styles
-  const containerStyle = {
-    display: 'flex',
-    padding: '24px',
-    gap: '32px',
-    backgroundColor: '#ECF1EA',
-    minHeight: '100vh',
-    flexWrap: 'wrap'
-  };
-
-  const sectionStyle = {
-    backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    padding: '24px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-    border: '1px solid #e2e8f0'
-  };
-
-  const productCardStyle = {
-    border: '2px solid #e2e8f0',
-    borderRadius: '12px',
-    padding: '16px',
-    width: '200px',
-    textAlign: 'center',
-    backgroundColor: '#ffffff',
-    cursor: 'pointer'
-  };
-
-  const cartItemStyle = {
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    padding: '16px',
-    backgroundColor: '#ffffff'
-  };
-
-  const buttonStyle = {
-    padding: '8px 16px',
-    borderRadius: '6px',
-    border: 'none',
-    fontWeight: '600',
-    cursor: 'pointer',
-    fontSize: '14px'
-  };
-
-  const primaryButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#3182ce',
-    color: '#ffffff'
-  };
-
-  const secondaryButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#e2e8f0',
-    color: '#4a5568'
-  };
-
-  const dangerButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#e53e3e',
-    color: '#ffffff'
-  };
-
-  const inputStyle = {
-    width: '100%',
-    padding: '12px 16px',
-    border: '2px solid #e2e8f0',
-    borderRadius: '8px',
-    fontSize: '14px',
-    color: '#2d3748',
-    backgroundColor: '#ffffff',
-    outline: 'none'
-  };
-
-  const modalOverlayStyle = {
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    backdropFilter: 'blur(4px)'
-  };
-
-  const modalContentStyle = {
-    backgroundColor: '#ffffff',
-    padding: '32px',
-    borderRadius: '12px',
-    width: '500px',
-    maxHeight: '90vh',
-    overflowY: 'auto',
-    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
-    border: '1px solid #e2e8f0'
-  };
-
   return (
     <>
       <PageHeader title="Transact" />
 
       {/* Toast Notification */}
       {toast && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          backgroundColor: toast.type === 'error' ? '#e53e3e' : '#38a169',
-          color: '#ffffff',
-          padding: '16px 20px',
-          borderRadius: '8px',
-          boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
-          zIndex: 2000,
-          fontWeight: '600'
-        }}>
+        <div className={toast.type === 'error' ? styles.toastError : styles.toastSuccess}>
           {toast.message}
         </div>
       )}
 
-      <div style={containerStyle}>
+      <div className={styles.container}>
         {/* Products Section */}
-        <div style={{
-          ...sectionStyle,
-          flex: '2',
-          minWidth: '600px'
-        }}>
-          <h2 style={{
-            margin: '0 0 20px 0',
-            fontSize: '24px',
-            fontWeight: '700',
-            color: '#2d3748',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
+        <div className={styles.productsSection}>
+          <h2 className={styles.sectionHeader}>
             <FiTag />
             Products
           </h2>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: '24px',
-            gap: '12px'
-          }}>
-            <FiSearch style={{ color: '#718096', fontSize: '18px' }} />
+          <div className={styles.searchContainer}>
+            <FiSearch className={styles.searchIcon} />
             <input
               placeholder="Search products by name or category..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={inputStyle}
+              className={styles.searchInput}
             />
           </div>
 
           {loading ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '40px',
-              color: '#718096'
-            }}>
+            <div className={styles.loadingState}>
               Loading products...
             </div>
           ) : (
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '16px',
-              justifyContent: 'flex-start'
-            }}>
+            <div className={styles.productsGrid}>
               {filteredProducts.map((product) => {
                 const stockStatus = getStockStatus(product.itemCount);
                 return (
-                  <div
-                    key={product._id}
-                    className="product-card"
-                    style={productCardStyle}
-                  >
+                  <div key={product._id} className={styles.productCard}>
                     <img
                       src={product.itemImage}
                       alt={product.itemName}
-                      style={{
-                        width: '80px',
-                        height: '80px',
-                        objectFit: 'cover',
-                        borderRadius: '8px',
-                        margin: '0 auto 12px',
-                        display: 'block',
-                        border: '1px solid #e2e8f0'
-                      }}
+                      className={styles.productImage}
                     />
-                    <h3 style={{
-                      margin: '0 0 8px 0',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      color: '#2d3748'
-                    }}>
+                    <h3 className={styles.productName}>
                       {product.itemName}
                     </h3>
-                    <p style={{
-                      margin: '0 0 8px 0',
-                      fontSize: '12px',
-                      color: '#718096',
-                      backgroundColor: '#edf2f7',
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      display: 'inline-block'
-                    }}>
+                    <p className={styles.productCategory}>
                       {product.itemCategory}
                     </p>
-                    <p style={{
-                      margin: '0 0 8px 0',
-                      fontSize: '18px',
-                      fontWeight: '700',
-                      color: '#2d3748'
-                    }}>
+                    <p className={styles.productPrice}>
                       {formatPrice(product.itemPrice)}
                     </p>
-                    <p style={{
-                      margin: '0 0 12px 0',
-                      fontSize: '12px',
-                      color: stockStatus.color,
-                      fontWeight: '600'
-                    }}>
+                    <p
+                      className={styles.stockStatus}
+                      style={{ color: stockStatus.color }}
+                    >
                       {stockStatus.label} ({product.itemCount})
                     </p>
                     <button
-                      className="add-to-cart-btn"
-                      style={{
-                        ...primaryButtonStyle,
-                        width: '100%',
-                        opacity: product.itemCount === 0 ? 0.5 : 1,
-                        cursor: product.itemCount === 0 ? 'not-allowed' : 'pointer'
-                      }}
+                      className={styles.addToCartButton}
                       onClick={() => addToCart(product)}
                       disabled={product.itemCount === 0}
                     >
@@ -555,117 +346,58 @@ const Sale = () => {
         </div>
 
         {/* Cart Section */}
-        <div style={{
-          ...sectionStyle,
-          flex: '1',
-          minWidth: '350px',
-          height: 'fit-content'
-        }}>
-          <h2 style={{
-            margin: '0 0 20px 0',
-            fontSize: '24px',
-            fontWeight: '700',
-            color: '#2d3748',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
+        <div className={styles.cartSection}>
+          <h2 className={styles.sectionHeader}>
             <FiShoppingCart />
             Cart ({cart.length})
           </h2>
 
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            marginBottom: '20px',
-            maxHeight: '400px',
-            overflowY: 'auto'
-          }}>
+          <div className={styles.cartItems}>
             {cart.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '40px',
-                color: '#718096'
-              }}>
+              <div className={styles.emptyState}>
                 Your cart is empty
               </div>
             ) : (
               cart.map((item) => (
-                <div key={item._id} style={cartItemStyle}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '8px'
-                  }}>
+                <div key={item._id} className={styles.cartItem}>
+                  <div className={styles.cartItemHeader}>
                     <div>
-                      <h4 style={{
-                        margin: '0 0 4px 0',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: '#2d3748'
-                      }}>
+                      <h4 className={styles.cartItemName}>
                         {item.itemName}
                       </h4>
-                      <p style={{
-                        margin: 0,
-                        fontSize: '12px',
-                        color: '#718096'
-                      }}>
+                      <p className={styles.cartItemPrice}>
                         {formatPrice(item.itemPrice)} each
                       </p>
                     </div>
                     <button
-                      className="danger-btn"
-                      style={dangerButtonStyle}
+                      className={styles.dangerButton}
                       onClick={() => removeFromCart(item._id)}
                     >
                       <FiTrash2 />
                     </button>
                   </div>
 
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
+                  <div className={styles.cartItemControls}>
+                    <div className={styles.quantityControls}>
                       <button
-                        className="secondary-btn"
-                        style={secondaryButtonStyle}
+                        className={styles.secondaryButton}
                         onClick={() => updateQuantity(item._id, -1)}
                         disabled={item.quantity <= 1}
                       >
                         <FiMinus />
                       </button>
-                      <span style={{
-                        minWidth: '40px',
-                        textAlign: 'center',
-                        fontWeight: '600',
-                        color: '#2d3748'
-                      }}>
+                      <span className={styles.quantity}>
                         {item.quantity}
                       </span>
                       <button
-                        className="secondary-btn"
-                        style={secondaryButtonStyle}
+                        className={styles.secondaryButton}
                         onClick={() => updateQuantity(item._id, 1)}
                         disabled={item.quantity >= item.itemCount}
                       >
                         <FiPlus />
                       </button>
                     </div>
-                    <p style={{
-                      margin: 0,
-                      fontSize: '16px',
-                      fontWeight: '700',
-                      color: '#2d3748'
-                    }}>
+                    <p className={styles.cartItemTotal}>
                       {formatPrice(item.itemPrice * item.quantity)}
                     </p>
                   </div>
@@ -674,42 +406,16 @@ const Sale = () => {
             )}
           </div>
 
-          <div style={{
-            borderTop: '2px solid #e2e8f0',
-            paddingTop: '16px'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '16px'
-            }}>
-              <span style={{
-                fontSize: '20px',
-                fontWeight: '700',
-                color: '#2d3748'
-              }}>
-                Total:
-              </span>
-              <span style={{
-                fontSize: '24px',
-                fontWeight: '700',
-                color: '#3182ce'
-              }}>
+          <div className={styles.cartTotal}>
+            <div className={styles.totalRow}>
+              <span className={styles.totalLabel}>Total:</span>
+              <span className={styles.totalAmount}>
                 {formatPrice(total)}
               </span>
             </div>
 
             <button
-              className="cart-btn"
-              style={{
-                ...primaryButtonStyle,
-                width: '100%',
-                padding: '16px',
-                fontSize: '16px',
-                opacity: cart.length === 0 ? 0.5 : 1,
-                cursor: cart.length === 0 ? 'not-allowed' : 'pointer'
-              }}
+              className={styles.checkoutButton}
               onClick={handleCheckout}
               disabled={cart.length === 0}
             >
@@ -722,56 +428,36 @@ const Sale = () => {
 
       {/* Checkout Modal */}
       {showCheckout && (
-        <div style={modalOverlayStyle}>
-          <div style={modalContentStyle}>
-            <h2 style={{
-              margin: '0 0 24px 0',
-              fontSize: '24px',
-              fontWeight: '700',
-              color: '#2d3748',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalHeader}>
               <FiCreditCard />
               Complete Transaction
             </h2>
 
             <form
               onSubmit={checkoutForm.handleSubmit(onCheckoutSubmit)}
-              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+              className={styles.form}
             >
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontWeight: '600',
-                  color: '#2d3748',
-                  fontSize: '14px'
-                }}>
+              <div className={styles.formField}>
+                <label className={styles.label}>
                   <FiUser style={{ marginRight: '4px' }} />
                   Employee Name *
                 </label>
                 <input
                   {...checkoutForm.register("transactionEmployee", { required: true })}
                   placeholder="Enter employee name"
-                  style={inputStyle}
+                  className={styles.input}
                 />
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontWeight: '600',
-                  color: '#2d3748',
-                  fontSize: '14px'
-                }}>
+              <div className={styles.formField}>
+                <label className={styles.label}>
                   Payment Method *
                 </label>
                 <select
                   {...checkoutForm.register("transactionPaymentMethod", { required: true })}
-                  style={inputStyle}
+                  className={styles.select}
                 >
                   <option value="cash">Cash</option>
                   <option value="card">Credit/Debit Card</option>
@@ -780,14 +466,8 @@ const Sale = () => {
                 </select>
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontWeight: '600',
-                  color: '#2d3748',
-                  fontSize: '14px'
-                }}>
+              <div className={styles.formField}>
+                <label className={styles.label}>
                   <FiDollarSign style={{ marginRight: '4px' }} />
                   Amount Paid *
                 </label>
@@ -801,114 +481,61 @@ const Sale = () => {
                     valueAsNumber: true
                   })}
                   placeholder="Enter amount paid"
-                  style={inputStyle}
+                  className={styles.input}
                 />
                 {checkoutForm.watch("transactionAmountPaid") && (
-                  <div style={{
-                    marginTop: '8px',
-                    padding: '8px',
-                    backgroundColor: '#f0fff4',
-                    borderRadius: '4px',
-                    border: '1px solid #9ae6b4'
-                  }}>
-                    <p style={{
-                      margin: 0,
-                      fontSize: '14px',
-                      color: '#2f855a',
-                      fontWeight: '600'
-                    }}>
+                  <div className={styles.changeIndicator}>
+                    <p className={styles.changeText}>
                       Change: {formatPrice(calculateChange())}
                     </p>
                   </div>
                 )}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className={styles.checkboxContainer}>
                 <input
                   type="checkbox"
                   {...checkoutForm.register("transactionDiscount")}
-                  style={{ width: '16px', height: '16px' }}
+                  className={styles.checkbox}
                 />
-                <label style={{
-                  fontWeight: '600',
-                  color: '#2d3748',
-                  fontSize: '14px'
-                }}>
+                <label className={styles.label}>
                   Apply 10% Discount
                 </label>
               </div>
 
-              <div style={{
-                backgroundColor: '#f7fafc',
-                padding: '16px',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0'
-              }}>
-                <h3 style={{
-                  margin: '0 0 12px 0',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  color: '#2d3748'
-                }}>
+              <div className={styles.orderSummary}>
+                <h3 className={styles.orderSummaryTitle}>
                   Order Summary
                 </h3>
                 {cart.map(item => (
-                  <div key={item._id} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: '4px',
-                    fontSize: '14px',
-                    color: '#4a5568'
-                  }}>
+                  <div key={item._id} className={styles.orderItem}>
                     <span>{item.itemName} x{item.quantity}</span>
                     <span>{formatPrice(item.itemPrice * item.quantity)}</span>
                   </div>
                 ))}
                 {checkoutForm.watch("transactionDiscount") && (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: '4px',
-                    fontSize: '14px',
-                    color: '#38a169',
-                    fontWeight: '600'
-                  }}>
+                  <div className={styles.discountRow}>
                     <span>Discount (10%):</span>
                     <span>-{formatPrice(total * 0.1)}</span>
                   </div>
                 )}
-                <div style={{
-                  borderTop: '1px solid #e2e8f0',
-                  paddingTop: '8px',
-                  marginTop: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '16px',
-                  fontWeight: '700',
-                  color: '#2d3748'
-                }}>
+                <div className={styles.orderTotal}>
                   <span>Total:</span>
                   <span>{formatPrice(checkoutForm.watch("transactionDiscount") ? total * 0.9 : total)}</span>
                 </div>
               </div>
 
-              <div style={{
-                display: 'flex',
-                gap: '12px',
-                justifyContent: 'flex-end'
-              }}>
+              <div className={styles.modalActions}>
                 <button
                   type="button"
-                  className="secondary-btn"
+                  className={styles.secondaryButton}
                   onClick={() => setShowCheckout(false)}
-                  style={secondaryButtonStyle}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="cart-btn"
-                  style={primaryButtonStyle}
+                  className={styles.primaryButton}
                 >
                   Complete Transaction
                 </button>
