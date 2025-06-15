@@ -2,18 +2,7 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { FiSearch, FiEdit2, FiTrash2, FiX } from "react-icons/fi"
 import PageHeader from "./components/PageHeader"
-import {
-  Box,
-  Flex,
-  Heading,
-  Input,
-  Table,
-  Text,
-  Image,
-  Button,
-  Spinner,
-  Badge,
-} from "@chakra-ui/react"
+import styles from "./styles/Inventory.module.css"
 
 function Inventory() {
   const [inventory, setInventory] = useState([])
@@ -151,375 +140,160 @@ function Inventory() {
     return { label: 'In Stock', colorScheme: 'green' }
   }
 
-  const modalOverlayStyle = {
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    backdropFilter: '0'
-  }
-
-  const modalContentStyle = {
-    backgroundColor: '#ffffff',
-    padding: '32px',
-    borderRadius: '12px',
-    boxShadow: '0',
-    border: '1px solid #e2e8f0',
-    maxHeight: '90vh',
-    overflowY: 'auto'
-  }
-
-  const inputStyle = {
-    width: '100%',
-    padding: '12px 16px',
-    border: '2px solid #e2e8f0',
-    borderRadius: '8px',
-    fontSize: '14px',
-    color: '#2d3748',
-    backgroundColor: '#ffffff',
-    transition: 'all 0.2s',
-    outline: 'none'
-  }
-
-  const buttonStyle = {
-    padding: '12px 24px',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    border: 'none'
-  }
-
-  const primaryButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#3182ce',
-    color: '#ffffff'
-  }
-
-  const secondaryButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#ffffff',
-    color: '#4a5568',
-    border: '2px solid #e2e8f0'
-  }
-
-  const dangerButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#e53e3e',
-    color: '#ffffff'
-  }
-
   return (
     <>
       <PageHeader title="Inventory" />
 
       {/* Toast Notification */}
       {toast && (
-        <Box
-          position="fixed"
-          top={4}
-          right={4}
-          bg={toast.type === 'error' ? 'red.500' : 'green.500'}
-          color="white"
-          px={6}
-          py={3}
-          borderRadius="md"
-          boxShadow="lg"
-          zIndex={2000}
-        >
+        <div className={`${styles.toast} ${styles[toast.type]}`}>
           {toast.message}
-        </Box>
+        </div>
       )}
 
-      <Box px={8} py={6} bg="gray.50" minH="100vh">
+      <div className={styles.container}>
         {/* Search and Stats Bar */}
-        <Flex
-          mb={6}
-          justify="space-between"
-          align="center"
-          flexWrap="wrap"
-          gap={4}
-          bg="white"
-          p={6}
-          borderRadius="xl"
-          boxShadow="sm"
-          border="1px solid"
-          borderColor="gray.200"
-        >
-          <Flex align="center" flex="1" maxW="400px">
-            <FiSearch
-              style={{
-                marginRight: "12px",
-                color: "#718096",
-                fontSize: "18px"
-              }}
-            />
-            <Input
+        <div className={styles.searchStatsBar}>
+          <div className={styles.searchContainer}>
+            <FiSearch className={styles.searchIcon} />
+            <input
+              className={styles.searchInput}
               placeholder="Search by name, description, or category..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              bg="gray.50"
-              border="2px solid"
-              borderColor="gray.200"
-              color="gray.800"
-              _focus={{
-                borderColor: "blue.400",
-                boxShadow: "0 0 0 1px #3182ce"
-              }}
             />
-          </Flex>
+          </div>
 
-          <Box
-            bg="blue.50"
-            px={4}
-            py={2}
-            borderRadius="lg"
-            border="1px solid"
-            borderColor="blue.200"
-          >
-            <Text fontWeight="bold" color="blue.800">
+          <div className={styles.totalItemsBox}>
+            <p className={styles.totalItemsText}>
               Total Items: {filteredInventory.length}
-            </Text>
-          </Box>
-        </Flex>
+            </p>
+          </div>
+        </div>
 
         {/* Main Table */}
-        <Box
-          overflowX="auto"
-          borderRadius="xl"
-          bg="white"
-          boxShadow="lg"
-          border="1px solid"
-          borderColor="gray.200"
-        >
-          <Table.Root variant="simple">
-            <Table.Header bg="gray.100">
-              <Table.Row>
-                <Table.ColumnHeader
-                  color="gray.700"
-                  fontWeight="bold"
-                  fontSize="sm"
-                  py={4}
-                >
-                  Product
-                </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  color="gray.700"
-                  fontWeight="bold"
-                  fontSize="sm"
-                >
-                  Category
-                </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  color="gray.700"
-                  fontWeight="bold"
-                  fontSize="sm"
-                >
-                  Price
-                </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  color="gray.700"
-                  fontWeight="bold"
-                  fontSize="sm"
-                >
-                  Stock
-                </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  color="gray.700"
-                  fontWeight="bold"
-                  fontSize="sm"
-                >
-                  Expiration
-                </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  color="gray.700"
-                  fontWeight="bold"
-                  fontSize="sm"
-                >
-                  Actions
-                </Table.ColumnHeader>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
+        <div className={styles.tableContainer}>
+          <table className={styles.table}>
+            <thead className={styles.tableHeader}>
+              <tr className={styles.tableHeaderRow}>
+                <th className={styles.tableHeaderCell}>Product</th>
+                <th className={styles.tableHeaderCell}>Category</th>
+                <th className={styles.tableHeaderCell}>Price</th>
+                <th className={styles.tableHeaderCell}>Stock</th>
+                <th className={styles.tableHeaderCell}>Expiration</th>
+                <th className={styles.tableHeaderCell}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
               {loading ? (
-                <Table.Row>
-                  <Table.Cell colSpan={6} textAlign="center" py={8}>
-                    <Flex justify="center" align="center" color="gray.600">
-                      <Spinner size="sm" mr={3} />
-                      <Text>Loading inventory...</Text>
-                    </Flex>
-                  </Table.Cell>
-                </Table.Row>
+                <tr>
+                  <td colSpan={6} className={styles.loadingCell}>
+                    <div className={styles.loadingContainer}>
+                      <div className={styles.spinner}></div>
+                      <span>Loading inventory...</span>
+                    </div>
+                  </td>
+                </tr>
               ) : filteredInventory.length === 0 ? (
-                <Table.Row>
-                  <Table.Cell colSpan={6} textAlign="center" py={8}>
-                    <Text color="gray.500" fontSize="lg">
+                <tr>
+                  <td colSpan={6} className={styles.emptyCell}>
+                    <p className={styles.emptyText}>
                       {searchTerm
                         ? "No items match your search"
                         : "No inventory items found"}
-                    </Text>
-                  </Table.Cell>
-                </Table.Row>
+                    </p>
+                  </td>
+                </tr>
               ) : (
                 filteredInventory.map((item, index) => {
                   const stockStatus = getStockStatus(item.itemCount);
                   return (
-                    <Table.Row
+                    <tr
                       key={item._id || index}
-                      _hover={{ bg: "gray.50" }}
-                      borderBottom="1px solid"
-                      borderColor="gray.100"
+                      className={styles.tableRow}
                     >
-                      <Table.Cell py={4}>
-                        <Flex align="center">
-                          <Image
-                            src={item.itemImage}
+                      <td className={styles.tableCell}>
+                        <div className={styles.productCell}>
+                          <img
+                            src={item.itemImage || "https://via.placeholder.com/60"}
                             alt={item.itemName}
-                            boxSize="60px"
-                            borderRadius="lg"
-                            mr={4}
-                            fallbackSrc="https://via.placeholder.com/60"
-                            border="2px solid"
-                            borderColor="gray.200"
+                            className={styles.productImage}
+                            onError={(e) => {
+                              e.target.src = "https://via.placeholder.com/60"
+                            }}
                           />
-                          <Box>
-                            {/* PRODUCT NAME  */}
-                            <Text
-                              fontWeight="semibold"
-                              color="gray.800"
-                              fontSize="md"
-                            >
+                          <div className={styles.productInfo}>
+                            <h3 className={styles.productName}>
                               {item.itemName}
-                            </Text>
-                            <Text
-                              fontSize="sm"
-                              color="gray.500"
-                              mt={1}
-                            >
+                            </h3>
+                            <p className={styles.productDescription}>
                               {item.itemDescription}
-                            </Text>
-                          </Box>
-                        </Flex>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Badge
-                          colorScheme="purple"
-                          variant="subtle"
-                          px={3}
-                          py={1}
-                          borderRadius="full"
-                          fontWeight="medium"
-                        >
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <span className={`${styles.badge} ${styles.purple}`}>
                           {item.itemCategory}
-                        </Badge>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Text
-                          fontWeight="bold"
-                          color="gray.800"
-                          fontSize="md"
-                        >
+                        </span>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <p className={styles.price}>
                           {formatPrice(item.itemPrice)}
-                        </Text>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Box>
-                          <Text
-                            fontWeight="bold"
-                            color="gray.800"
-                            fontSize="lg"
-                          >
+                        </p>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <div className={styles.stockContainer}>
+                          <p className={styles.stockCount}>
                             {item.itemCount}
-                          </Text>
-                          <Badge
-                            colorScheme={stockStatus.colorScheme}
-                            variant="subtle"
-                            mt={1}
-                            px={2}
-                            py={1}
-                            borderRadius="md"
-                            fontSize="xs"
-                          >
+                          </p>
+                          <span className={`${styles.badge} ${styles.stockBadge} ${styles[stockStatus.colorScheme]}`}>
                             {stockStatus.label}
-                          </Badge>
-                        </Box>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Text color="gray.700">
+                          </span>
+                        </div>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <p className={styles.dateText}>
                           {formatDate(item.itemExpiration)}
-                        </Text>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Flex gap={2}>
-                          <Button
-                            size="sm"
-                            colorScheme="blue"
+                        </p>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <div className={styles.actionButtons}>
+                          <button
+                            className={`${styles.button} ${styles.edit}`}
                             onClick={() => handleEdit(item)}
-                            leftIcon={<FiEdit2 />}
-                            _hover={{ bg: "lightskyblue" }}
-                            variant="outline"
-                            color="black"
                           >
+                            <FiEdit2 />
                             Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            colorScheme="red"
+                          </button>
+                          <button
+                            className={`${styles.button} ${styles.delete}`}
                             onClick={() => handleDelete(item)}
-                            leftIcon={<FiTrash2 />}
-                            variant="outline"
-                            color="black"
-                            _hover={{ bg: "lightskyblue" }}
                           >
+                            <FiTrash2 />
                             Delete
-                          </Button>
-                        </Flex>
-                      </Table.Cell>
-                    </Table.Row>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })
               )}
-            </Table.Body>
-          </Table.Root>
-        </Box>
+            </tbody>
+          </table>
+        </div>
 
         {/* Edit Modal */}
         {editingItem && (
-          <div style={modalOverlayStyle}>
-            <div style={{ ...modalContentStyle, width: '500px' }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '24px'
-              }}>
-                <h2 style={{
-                  margin: 0,
-                  fontSize: '24px',
-                  fontWeight: '700',
-                  color: '#2d3748'
-                }}>
+          <div className={styles.modalOverlay}>
+            <div className={`${styles.modalContent} ${styles.edit}`}>
+              <div className={styles.modalHeader}>
+                <h2 className={styles.modalTitle}>
                   Edit Product
                 </h2>
                 <button
                   onClick={() => setEditingItem(null)}
-                  style={{
-                    border: 'none',
-                    background: '#f7fafc',
-                    borderRadius: '8px',
-                    width: '40px',
-                    height: '40px',
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                    color: '#4a5568',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
+                  className={styles.closeButton}
                 >
                   <FiX />
                 </button>
@@ -527,147 +301,100 @@ function Inventory() {
 
               <form
                 onSubmit={editForm.handleSubmit(onEditSubmit)}
-                style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+                className={styles.form}
               >
-                <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    fontWeight: '600',
-                    color: '#2d3748',
-                    fontSize: '14px'
-                  }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
                     Product Name *
                   </label>
                   <input
                     {...editForm.register("itemName", { required: true })}
                     placeholder="Enter product name"
-                    style={inputStyle}
+                    className={styles.input}
                   />
                 </div>
 
-                <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    fontWeight: '600',
-                    color: '#2d3748',
-                    fontSize: '14px'
-                  }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
                     Description *
                   </label>
                   <input
                     {...editForm.register("itemDescription", { required: true })}
                     placeholder="Enter description"
-                    style={inputStyle}
+                    className={styles.input}
                   />
                 </div>
 
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontWeight: '600',
-                      color: '#2d3748',
-                      fontSize: '14px'
-                    }}>
+                <div className={styles.formGroupRow}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>
                       Price (PHP) *
                     </label>
                     <input
                       {...editForm.register("itemPrice", { required: true })}
                       type="number"
                       placeholder="0.00"
-                      style={inputStyle}
+                      className={styles.input}
                     />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontWeight: '600',
-                      color: '#2d3748',
-                      fontSize: '14px'
-                    }}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>
                       Stock Count *
                     </label>
                     <input
                       {...editForm.register("itemCount", { required: true })}
                       type="number"
                       placeholder="0"
-                      style={inputStyle}
+                      className={styles.input}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    fontWeight: '600',
-                    color: '#2d3748',
-                    fontSize: '14px'
-                  }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
                     Category *
                   </label>
                   <input
                     {...editForm.register("itemCategory", { required: true })}
                     placeholder="Enter category"
-                    style={inputStyle}
+                    className={styles.input}
                   />
                 </div>
 
-                <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    fontWeight: '600',
-                    color: '#2d3748',
-                    fontSize: '14px'
-                  }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
                     Expiration Date
                   </label>
                   <input
                     {...editForm.register("itemExpiration")}
                     type="date"
-                    style={inputStyle}
+                    className={styles.input}
                   />
                 </div>
 
-                <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    fontWeight: '600',
-                    color: '#2d3748',
-                    fontSize: '14px'
-                  }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
                     Image URL *
                   </label>
                   <input
                     {...editForm.register("itemImage", { required: true })}
                     type="url"
                     placeholder="https://example.com/image.jpg"
-                    style={inputStyle}
+                    className={styles.input}
                   />
                 </div>
 
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: '12px',
-                  marginTop: '24px'
-                }}>
+                <div className={styles.modalActions}>
                   <button
                     type="button"
                     onClick={() => setEditingItem(null)}
-                    style={secondaryButtonStyle}
+                    className={`${styles.modalButton} ${styles.secondary}`}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    style={primaryButtonStyle}
+                    className={`${styles.modalButton} ${styles.primary}`}
                   >
                     Save Changes
                   </button>
@@ -679,52 +406,33 @@ function Inventory() {
 
         {/* Delete Confirmation Modal */}
         {deleteConfirm && (
-          <div style={modalOverlayStyle}>
-            <div style={{ ...modalContentStyle, width: '450px' }}>
-              <div style={{ marginBottom: '20px' }}>
-                <h3 style={{
-                  margin: '0 0 16px 0',
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  color: '#2d3748'
-                }}>
+          <div className={styles.modalOverlay}>
+            <div className={`${styles.modalContent} ${styles.delete}`}>
+              <div className={styles.deleteContent}>
+                <h3 className={`${styles.modalTitle} ${styles.delete}`}>
                   Delete Product
                 </h3>
-                <p style={{
-                  margin: '0 0 12px 0',
-                  color: '#4a5568',
-                  fontSize: '16px',
-                  lineHeight: '1.5'
-                }}>
+                <p className={styles.deleteText}>
                   Are you sure you want to delete{' '}
-                  <strong style={{ color: '#2d3748' }}>
+                  <span className={styles.deleteProductName}>
                     {deleteConfirm.itemName}
-                  </strong>?
+                  </span>?
                 </p>
-                <p style={{
-                  color: '#e53e3e',
-                  margin: '12px 0 0 0',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}>
+                <p className={styles.deleteWarning}>
                   This action cannot be undone.
                 </p>
               </div>
 
-              <div style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '12px'
-              }}>
+              <div className={`${styles.modalActions} ${styles.delete}`}>
                 <button
                   onClick={() => setDeleteConfirm(null)}
-                  style={secondaryButtonStyle}
+                  className={`${styles.modalButton} ${styles.secondary}`}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
-                  style={dangerButtonStyle}
+                  className={`${styles.modalButton} ${styles.danger}`}
                 >
                   Delete Product
                 </button>
@@ -732,7 +440,7 @@ function Inventory() {
             </div>
           </div>
         )}
-      </Box>
+      </div>
     </>
   )
 }
