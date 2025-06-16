@@ -10,6 +10,7 @@ import productRouter from "./routes/product.route.js";
 import userRouter from "./routes/user.route.js";
 import transactionRouter from './routes/transaction.route.js';
 import notificationRouter from './routes/notification.route.js';
+import loginRouter from './routes/login.route.js';
 
 
 import cors from "cors";
@@ -45,6 +46,7 @@ app.use("/products", productRouter)
 app.use("/users", userRouter)
 app.use("/transactions", transactionRouter)
 app.use("/notifications", notificationRouter)
+app.use("/login", loginRouter)
 
 app.get('/test', (req, res) => {
   try {
