@@ -1,6 +1,5 @@
 import User from "../models/user.model.js";
-import mongoose from 'mongoose';
-
+import bcrypt from "bcrypt";
 
 export const getUser = async (req, res) => {
   try {
@@ -18,19 +17,36 @@ export const getUser = async (req, res) => {
 export const postUser = async (req, res) => {
   const user = req.body; //Return Value: Object 
   // The req.body property is used to access the data sent by the client in POST requests. 
+  const { userUsername, userPassword, userFullName, userRole } = user;
 
   if (!user.userUsername || !user.userPassword || !user.userFullName || !user.userRole) {
     return res.status(400).json({ success: false, message: "Please provide all fields" })
   }
 
-  const newUser = new User(user)
-  //create new instance of User model using data received from the user request.
-  //aka a document. an instandce of a model is a document. aka record. see model file docs
 
   try {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(userPassword, saltRounds);
+    console.log("HASH: ", hashedPassword);
+
+    //create new instance of User model using data received from the user request.
+    //aka a document. an instandce of a model is a document. aka record. see model file docs
+    //set new user but pass hashedPassword for usePassword.
+    const newUser = new User(
+      {
+        userUsername,
+        userPassword: hashedPassword,
+        userFullName,
+        userRole
+      }
+    );
+
+    //not sure if this is needed kept it anyway
     await newUser.save();
+
     console.log('REQPARAMS: ', req.params);
     res.status(201).json({ success: true, data: newUser });
+
 
   } catch (error) {
     console.error("Error in Create user: ", error.message);
