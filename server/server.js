@@ -18,6 +18,7 @@ import cors from "cors";
 const PORT = 5555;
 const app = express();
 
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.json());
 
