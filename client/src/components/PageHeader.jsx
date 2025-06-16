@@ -51,7 +51,7 @@ const PageHeader = ({ title }) => {
           bg: 'transparent',
           color: 'white'
         }}
-        onClick={() => { navigate("/") }}>
+        onClick={() => { navigate("/home") }}>
         <Image src={avamiLogoWhite}
           alt="Logo" height="2rem" />
       </Button>
