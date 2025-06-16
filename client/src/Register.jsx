@@ -38,14 +38,14 @@ function Register() {
           temp register (4admin)
           <form onSubmit={handleSubmit(onSubmit)}>
             <Stack spacing={4}>
-              <Text color="gray.700">Username</Text>
-              <input {...register("userUsername", { required: true })} />
+              <Text color="gray.">Username</Text>
+              <input {...register("userUsername", { required: true })} style={{ color: "white" }} />
 
               <Text color="gray.700">Password</Text>
-              <input {...register("userPassword", { required: true })} color="white" />
+              <input {...register("userPassword", { required: true })} style={{ color: "white" }} />
 
               <Text color="gray.700">Full Name</Text>
-              <input {...register("userFullName", { required: true })} color="white" />
+              <input {...register("userFullName", { required: true })} style={{ color: "white" }} />
 
               Role
               <select {...register("userRole", { required: true })} >
