@@ -7,6 +7,7 @@ import Inventory from './Inventory'
 import Entry from './Entry'
 import Transact from './components/legacy/Transact'
 import Login from './Login'
+import Register from './Register'
 import TransactHistory from './TransactHistory'
 import Notifications from './Notifications'
 
@@ -22,7 +23,8 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<Layout />} >
           {/* index route is basically just default child route */}
-          <Route index element={<Home />} />
+          <Route index element={<Login />} />
+          <Route path="home" element={<Home />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="entry" element={<Entry />} />
           <Route path="transact" element={<Transact />} />
@@ -30,6 +32,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="login" element={<Login />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="sales" element={<Sales />} />
+          <Route path="register" element={<Register />} />
         </Route>
       </Routes>
     </Provider>
