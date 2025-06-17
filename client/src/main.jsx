@@ -10,6 +10,7 @@ import Login from './Login'
 import Register from './Register'
 import TransactHistory from './TransactHistory'
 import Notifications from './Notifications'
+import Help from './Help'
 
 import Sales from './Sale'
 
@@ -33,6 +34,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="notifications" element={<Notifications />} />
           <Route path="sales" element={<Sales />} />
           <Route path="register" element={<Register />} />
+          <Route path="help" element={<Help />} />
         </Route>
       </Routes>
     </Provider>
