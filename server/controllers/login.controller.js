@@ -22,16 +22,35 @@ export const loginUser = async (req, res) => {
     }
 
     //response object
+    //res.status(200).json({
+    //  success: true,
+    //  message: "Login successful",
+    //  user: {
+    //    id: user._id,
+    //    username: user.userUsername,
+    //    fullName: user.userFullName,
+    //    role: user.userRole,
+    //  },
+    //});
+
+
+    // EXPRESS-SESSION
+    // if isMatch, save user data to session.
+
+    req.session.user = {
+      id: user._id,
+      username: user.userUsername,
+      role: user.userRole,
+    };
+
+    console.log("Session ID:", req.sessionID); // or req.session.id
+
     res.status(200).json({
       success: true,
-      message: "Login successful",
-      user: {
-        id: user._id,
-        username: user.userUsername,
-        fullName: user.userFullName,
-        role: user.userRole,
-      },
+      message: "Login successful!!!!",
+      user: req.session.user,
     });
+
 
   } catch (error) {
     console.error("Login error:", error.message);
