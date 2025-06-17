@@ -93,7 +93,7 @@ function Register() {
                     className={styles.select}
                     {...register("role", { required: true })}
                   >
-                    <option value=""></option>
+                    <option value="">Select a role</option>
                     <option value="admin">Admin</option>
                     <option value="user">User</option>
                   </select>

@@ -1,0 +1,84 @@
+.container {
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.grid {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.featureCard {
+  background-color: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin: 0;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  min-width: 140px;
+  min-height: 120px;
+  width: 160px;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 2px 8px rgba(0,104,166,0.04);
+}
+
+.featureCard:hover {
+  background-color: #87ceeb;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 104, 166, 0.12);
+}
+
+.featureIcon {
+  font-size: 2.25rem;
+  margin-bottom: 10px;
+  color: #0068a6;
+  transition: color 0.3s ease;
+}
+
+.featureCard:hover .featureIcon {
+  color: white;
+}
+
+.featureLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin: 0;
+  transition: color 0.3s ease;
+}
+
+.featureCard:hover .featureLabel {
+  color: white;
+}
+
+@media (max-width: 700px) {
+  .container {
+    padding: 0;
+  }
+  .grid {
+    flex-direction: column;
+    gap: 12px;
+    max-width: 95vw;
+  }
+  .featureCard {
+    width: 90vw;
+    min-width: unset;
+    padding: 18px 0;
+  }
+}
