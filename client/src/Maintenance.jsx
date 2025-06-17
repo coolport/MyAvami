@@ -33,10 +33,9 @@ function Maintenance() {
               background: "rgba(0,0,0,0.4)",
               display: "flex",
               justifyContent: "center",
-              alignItems: "flex-start",
+              alignItems: "center", 
               zIndex: 1000,
               overflowY: "auto",
-              paddingTop: 48, // Ensures space from the top
               boxSizing: "border-box",
               width: "100vw",
               height: "100vh",

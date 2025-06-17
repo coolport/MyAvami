@@ -9,7 +9,7 @@
 html, body {
   height: 100%;
   width: 100%;
-  overflow-x: hidden;  /* Prevent horizontal scrolling */
+  overflow-x: hidden;  
   margin: 0;
   padding: 0;
 }
@@ -19,7 +19,7 @@ html, body {
   gap: 48px;
   justify-content: center;
   align-items: center;
-  max-width: 500px;   /* Reduce the grid area width */
+  max-width: 500px;  
   margin: 0 auto;
 }
 

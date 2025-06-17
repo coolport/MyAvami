@@ -12,7 +12,6 @@
   margin: 0 auto;
 }
 
-/* Responsive grid columns */
 @media (min-width: 480px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);
