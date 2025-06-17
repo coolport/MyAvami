@@ -3,12 +3,25 @@ import { FiUser, FiLogOut } from 'react-icons/fi';
 import { useNavigate } from 'react-router';
 import avamiLogoWhite from '../assets/logowhite.png';
 
-const DashboardHeader = ({ userType = "Admin" }) => {
+const DashboardHeader = () => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    // Implement logout logic here
-    navigate('/');
+  const handleLogout = async () => {
+    const url = "http://localhost:5555/logout"
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        navigate("/");
+      } else {
+        console.error("Logout failed");
+      }
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
   };
 
   return (
