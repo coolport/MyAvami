@@ -5,7 +5,6 @@ function Login() {
   const { register, handleSubmit } = useForm();
 
   async function onSubmit(data) {
-    console.log(data);
     try {
       const res = await fetch("http://localhost:5555/login", {
         method: "POST",
@@ -14,6 +13,10 @@ function Login() {
           userUsername: data.username,
           userPassword: data.password,
         }),
+        // INCLUDE SESSION ID, ETC IN FRONTEND
+        // alr being logged in node, but to make sure
+        // this + session option "sameSite: lax" allows displaying of SID from client
+        credentials: "include",
       });
 
       const result = await res.json();
@@ -23,7 +26,6 @@ function Login() {
         // TODO: store session, redirect, or update auth state
       } else {
         console.error("Login FAILED:", result.message);
-        // TODO: show toast or UI message
       }
     } catch (error) {
       console.error("Server error:", error.message);

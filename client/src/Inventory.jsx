@@ -16,6 +16,7 @@ function Inventory() {
   const editForm = useForm()
 
   useEffect(() => {
+
     getItems()
   }, [])
 
@@ -41,7 +42,10 @@ function Inventory() {
     setLoading(true)
     const url = "http://localhost:5555/products"
     try {
-      const response = await fetch(url)
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+      })
       if (!response.ok) {
         throw new Error(`Response status: ${response.status}`)
       }
