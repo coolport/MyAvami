@@ -9,11 +9,13 @@ const productRouter = express.Router();
 //Create routes
 
 
-productRouter.get("/", getProducts);
 
 // apply auth middleware
 // not working rn, wag muna galaawin
 // productRouter.get("/", requireLogin, requireRole("admin"), getProducts);
+productRouter.get("/", requireLogin, getProducts);
+
+// productRouter.get("/", getProducts);
 
 productRouter.post("/", postProducts);
 productRouter.put("/:id", putProduct);
