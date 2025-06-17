@@ -61,6 +61,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// app.use((req, res, next) => {
+//   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+//   next();
+// });
+
 // Mount x routing to these endpoints
 // signature is like ("endpoint", middleware/router)
 app.use("/products", productRouter)
