@@ -13,14 +13,35 @@ import notificationRouter from './routes/notification.route.js';
 import loginRouter from './routes/login.route.js';
 
 
+import session from "express-session";
 import cors from "cors";
 
 // const PORT = process.env.PORT;
 const PORT = 5555;
 const app = express();
 
+
+app.use(
+  session({
+    secret: "TEMPSECRET",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false,
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 1, // 1 hour
+      sameSite: "lax"
+    },
+  })
+);
+
+// app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true               //  allow cookies to be sent
+}));
+
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
 app.use(express.json());
 
 app.use((req, res, next) => {
@@ -58,18 +79,18 @@ app.get('/test', (req, res) => {
 
 
 
-let visits = 0;
-app.get('/', (req, res) => {
-  console.log("loaded")
-  visits += 1;
-  console.log(visits);
-  try {
-    res.json({ success: true, visits });
-  } catch (error) {
-    console.error("Error fetching: ", error.message);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-})
+// let visits = 0;
+// app.get('/', (req, res) => {
+//   console.log("loaded")
+//   visits += 1;
+//   console.log(visits);
+//   try {
+//     res.json({ success: true, visits });
+//   } catch (error) {
+//     console.error("Error fetching: ", error.message);
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// })
 
 
 
