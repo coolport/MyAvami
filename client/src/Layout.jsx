@@ -6,7 +6,7 @@ function Layout() {
 
   return (
     <>
-      {/*<Navbar />}*/}
+      {/* <Navbar />} */}
       {/* <Box minH={"100vh"} bgColor={"#F3F8F9"}> */}
       <Box minH={"100vh"} bgColor={"#ECF1EA"}>
         {/* <Box minH={"100vh"} bgColor={"black"}> */}
