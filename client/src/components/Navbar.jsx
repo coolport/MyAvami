@@ -9,10 +9,10 @@ function Navbar() {
       DEV NAVBAR
       <HStack>
         <Link to="/">
-          <Button>Home</Button>
-        </Link>
-        <Link to="/login">
           <Button>Login</Button>
+        </Link>
+        <Link to="/home">
+          <Button>Home</Button>
         </Link>
         <Link to="/register">
           <Button>Register</Button>
