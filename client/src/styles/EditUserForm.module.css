@@ -107,3 +107,27 @@
     font-size: 20px;
   }
 }
+
+/* Modal styles */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Align to top, not center */
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 350px;
+  max-width: 95vw;
+  max-height: 90vh;
+  margin-top: 48px; /* Push modal down from the top */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  overflow-y: auto;
+}

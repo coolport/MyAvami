@@ -13,6 +13,7 @@ import Notifications from './Notifications'
 import Help from './Help'
 import Reports from './Reports'
 import EditUserForm from './EditUserForm'
+import Maintenance from './Maintenance'
 
 import Sales from './Sale'
 
@@ -40,6 +41,7 @@ createRoot(document.getElementById('root')).render(
 
           <Route path="help" element={<Help />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="maintenance" element={<Maintenance />} />
         </Route>
       </Routes>
     </Provider>
