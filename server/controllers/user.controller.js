@@ -58,3 +58,40 @@ export const postUser = async (req, res) => {
   }
 
 }
+
+export const putUser = async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+
+  if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).json({ success: false, message: "Invalid user ID format" });
+  }
+
+  //if no errors hash pw before PUTting
+  try {
+    if (updateData.userPassword) {
+      const saltRounds = 10;
+      updateData.userPassword = await bcrypt.hash(updateData.userPassword, saltRounds);
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      updateData,
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    console.log('Updated user:', updatedUser);
+    res.status(200).json({ success: true, data: updatedUser });
+
+  } catch (error) {
+    console.error("Error updating user:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};

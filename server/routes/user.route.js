@@ -1,5 +1,5 @@
 import express from 'express';
-import { postUser, getUser } from '../controllers/user.controller.js';
+import { postUser, putUser, getUser } from '../controllers/user.controller.js';
 
 const userRouter = express.Router();
 
@@ -7,8 +7,8 @@ const userRouter = express.Router();
 //make sure to pass as reference. error msg for calling controllers is vague
 userRouter.get("/", getUser);
 userRouter.post("/", postUser);
-// router.post("/", postProducts);
-// router.put("/:id", putProduct);
+userRouter.put("/:id", putUser);
+
 // router.delete("/:id", deleteProduct);
 
 export default userRouter;
