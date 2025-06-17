@@ -10,9 +10,10 @@ import productRouter from "./routes/product.route.js";
 import userRouter from "./routes/user.route.js";
 import transactionRouter from './routes/transaction.route.js';
 import notificationRouter from './routes/notification.route.js';
-import loginRouter from './routes/login.route.js';
-import logoutRouter from './routes/logout.route.js';
+import loginRouter from './routes/auth/login.route.js';
+import logoutRouter from './routes/auth/logout.route.js';
 import helpRouter from './routes/help.route.js';
+import userSessionRouter from './routes/auth/session.route.js';
 
 import session from "express-session";
 import cors from "cors";
@@ -76,6 +77,7 @@ app.use("/notifications", notificationRouter)
 app.use("/login", loginRouter)
 app.use("/logout", logoutRouter)
 app.use("/help", helpRouter)
+app.use("/auth", userSessionRouter)
 
 app.get('/test', (req, res) => {
   try {
