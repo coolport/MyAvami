@@ -12,7 +12,7 @@ import TransactHistory from './TransactHistory'
 import Notifications from './Notifications'
 import Help from './Help'
 import Reports from './Reports'
-
+import EditUserForm from './EditUserForm'
 
 import Sales from './Sale'
 
@@ -36,6 +36,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="notifications" element={<Notifications />} />
           <Route path="sales" element={<Sales />} />
           <Route path="register" element={<Register />} />
+          <Route path="edituser" element={<EditUserForm />} />
 
           <Route path="help" element={<Help />} />
           <Route path="reports" element={<Reports />} />
