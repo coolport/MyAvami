@@ -12,6 +12,7 @@ import transactionRouter from './routes/transaction.route.js';
 import notificationRouter from './routes/notification.route.js';
 import loginRouter from './routes/login.route.js';
 import logoutRouter from './routes/logout.route.js';
+import helpRouter from './routes/help.route.js';
 
 import session from "express-session";
 import cors from "cors";
@@ -74,6 +75,7 @@ app.use("/transactions", transactionRouter)
 app.use("/notifications", notificationRouter)
 app.use("/login", loginRouter)
 app.use("/logout", logoutRouter)
+app.use("/help", helpRouter)
 
 app.get('/test', (req, res) => {
   try {
