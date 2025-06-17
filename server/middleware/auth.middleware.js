@@ -9,7 +9,8 @@ export const requireLogin = (req, res, next) => {
 };
 
 export const requireRole = (role) => {
-  console.log("Session at requireROLE:", req.session);
+  // no work bc req res dont exist in this scope. only in the return
+  // console.log("Session at requireROLE:", req.session);
   return (req, res, next) => {
     if (!req.session.user || req.session.user.role !== role) {
       // console.log(req.session)
