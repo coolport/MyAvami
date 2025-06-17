@@ -96,7 +96,6 @@
   cursor: not-allowed;
 }
 
-/* Responsive design */
 @media (max-width: 600px) {
   .container {
     margin: 10px;
@@ -106,4 +105,28 @@
   .title {
     font-size: 20px;
   }
+}
+
+/* Modal styles */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; 
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 350px;
+  max-width: 95vw;
+  max-height: 90vh;
+  margin-top: 48px; 
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  overflow-y: auto;
 }

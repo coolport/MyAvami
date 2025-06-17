@@ -1,36 +1,28 @@
-/* Main container */
 .container {
-  padding: 48px;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Grid container */
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;  
+  margin: 0;
+  padding: 0;
+}
+
 .grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
   gap: 48px;
-  max-width: 1400px;
+  justify-content: center;
+  align-items: center;
+  max-width: 500px;  
   margin: 0 auto;
 }
 
-@media (min-width: 480px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 768px) {
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* Feature card */
 .featureCard {
   background-color: white;
   border-radius: 16px;
@@ -39,23 +31,26 @@
   text-align: center;
   transition: all 0.3s ease;
   border: 1px solid #e2e8f0;
+  min-width: 200px;
   min-height: 180px;
+  width: 200px;
+  height: 180px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-decoration: none;
   color: inherit;
+  box-shadow: 0 2px 8px rgba(0,104,166,0.04);
 }
 
 .featureCard:hover {
   background-color: #87ceeb;
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 104, 166, 0.3);
   color: white;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 104, 166, 0.15);
 }
 
-/* Feature icon */
 .featureIcon {
   width: 48px;
   height: 48px;
@@ -68,7 +63,6 @@
   color: white;
 }
 
-/* Feature label */
 .featureLabel {
   font-size: 18px;
   font-weight: 600;
@@ -79,4 +73,20 @@
 
 .featureCard:hover .featureLabel {
   color: white;
+}
+
+@media (max-width: 700px) {
+  .container {
+    padding: 0;
+  }
+  .grid {
+    flex-direction: column;
+    gap: 24px;
+    max-width: 90vw;
+  }
+  .featureCard {
+    width: 90vw;
+    min-width: unset;
+    padding: 32px 0;
+  }
 }
