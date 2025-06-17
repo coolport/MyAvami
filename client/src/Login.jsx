@@ -1,5 +1,7 @@
 import { Box, Button, Center, Stack, Text } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
+import styles from "./styles/Login.module.css";
+import logo from "./assets/logo.png";
 
 function Login() {
   const { register, handleSubmit } = useForm();
@@ -33,26 +35,39 @@ function Login() {
   }
 
   return (
-    <>
-      <Center>
-        <Box width={"50%"} marginTop={50} color={"black"}>
-          temp login
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <Stack spacing={4}>
-              <Text color="gray.700">Username</Text>
-              <input {...register("username", { required: true })} style={{ color: "white" }} />
+    <div className={styles.container}>
+      <div className={styles.loginBox}>
+        <div style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: 24 }}>
+          <img src={logo} alt="MyAvami Logo" style={{ height: "60px" }} />
+        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+          <label className={styles.label} htmlFor="username">
+            Username
+          </label>
+          <input
+            id="username"
+            className={styles.input}
+            {...register("username", { required: true })}
+            autoComplete="username"
+          />
 
-              <Text color="gray.700">Password</Text>
-              <input {...register("password", { required: true })} style={{ color: "white" }} />
+          <label className={styles.label} htmlFor="password">
+            Password
+          </label>
+          <input
+            id="password"
+            className={styles.input}
+            type="password"
+            {...register("password", { required: true })}
+            autoComplete="current-password"
+          />
 
-              <Button type="submit" mt={4} colorScheme="blue">
-                Login
-              </Button>
-            </Stack>
-          </form>
-        </Box>
-      </Center>
-    </>
+          <button className={styles.button} type="submit">
+            Login
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
 
