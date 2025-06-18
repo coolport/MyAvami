@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 // import './index.css'
 import Layout from './Layout'
 import Home from './Home'
+import HomepageEmployee from './HomeEmployee'
 import Inventory from './Inventory'
 import Entry from './Entry'
 import Transact from './components/legacy/Transact'
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')).render(
           {/* index route is basically just default child route */}
           <Route index element={<Login />} />
           <Route path="home" element={<Home />} />
+          <Route path="homeemployee" element={<HomepageEmployee />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="entry" element={<Entry />} />
           <Route path="transact" element={<Transact />} />

@@ -2,8 +2,33 @@ import { Flex, Button, Text, Icon, Image, Separator, HStack } from '@chakra-ui/r
 import { FiUser, FiLogOut } from 'react-icons/fi';
 import { useNavigate } from 'react-router';
 import avamiLogoWhite from '../assets/logowhite.png';
+import { useEffect, useState } from 'react';
 
 const DashboardHeader = () => {
+  const [userRole, setUserRole] = useState("");
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("http://localhost:5555/auth/me", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setUserRole(data.user.role); // e.g. 'admin' or 'employee'
+        } else {
+          console.error("Failed to fetch user");
+        }
+      } catch (err) {
+        console.error("Error fetching user:", err);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -42,7 +67,7 @@ const DashboardHeader = () => {
         <HStack spacing={2}>
           <Icon as={FiUser} boxSize={6} />
           {/* <Text fontWeight="medium">{userType}</Text> */}
-          <Text fontWeight="medium">Admin</Text>
+          <Text fontWeight="medium">{userRole}</Text>
         </HStack>
         <Separator orientation="vertical" height="24px" borderColor="white" />
         <Button

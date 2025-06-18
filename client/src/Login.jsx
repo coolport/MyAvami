@@ -2,8 +2,32 @@ import { Box, Button, Center, Stack, Text } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 import styles from "./styles/Login.module.css";
 import logo from "./assets/logo.png";
+import { useNavigate } from "react-router";
+import { useState } from "react";
 
 function Login() {
+
+  const [userRole, setUserRole] = useState("");
+
+  const fetchUser = async () => {
+    try {
+      const res = await fetch("http://localhost:5555/auth/me", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUserRole(data.user.role); // e.g. 'admin' or 'employee'
+      } else {
+        console.error("Failed to fetch user");
+      }
+    } catch (err) {
+      console.error("Error fetching user:", err);
+    }
+  }
+
+  const navigate = useNavigate();
   const { register, handleSubmit } = useForm();
 
   async function onSubmit(data) {
@@ -21,11 +45,23 @@ function Login() {
         credentials: "include",
       });
 
+      // no need for this pala
+      // fetchUser()
       const result = await res.json();
 
       if (res.ok) {
         console.log("Login SUCCESFUL:", result);
-        // TODO: store session, redirect, or update auth state
+        const role = result.user?.role;
+
+        // fetchUser();
+        if (role === "admin") {
+          navigate("/home");
+        } else if (role === "employee") {
+          navigate("/homeemployee");
+        }
+
+
+
       } else {
         console.error("Login FAILED:", result.message);
       }
