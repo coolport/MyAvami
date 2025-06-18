@@ -2,6 +2,7 @@ import { Box, Button, Center, Stack, Text } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 import styles from "./styles/Register.module.css";
 import logo from "./assets/logo.png";
+import PageHeader from "./components/PageHeader";
 
 function Register() {
   const { register, handleSubmit } = useForm();
@@ -35,6 +36,7 @@ function Register() {
 
   return (
     <>
+      <PageHeader />
       <Center>
         <Box width={"50%"} marginTop={50} color={"black"}>
           <div className={styles.container}>
@@ -51,7 +53,7 @@ function Register() {
                     placeholder="Enter your username"
                     {...register("userUsername", { required: true })}
                     autoComplete="username"
-                    style={{ color: "white" }}
+                    style={{ color: "black" }}
                   />
 
                   <Text color="gray.700">Password</Text>
@@ -62,7 +64,7 @@ function Register() {
                     placeholder="Enter your password"
                     {...register("userPassword", { required: true })}
                     autoComplete="new-password"
-                    style={{ color: "white" }}
+                    style={{ color: "black" }}
                   />
 
                   <Text color="gray.700">Full Name</Text>
@@ -71,19 +73,9 @@ function Register() {
                     className={styles.input}
                     placeholder="Enter your full name"
                     {...register("userFullName", { required: true })}
-                    style={{ color: "white" }}
+                    style={{ color: "black" }}
                   />
 
-                  <Text color="gray.700">Email</Text>
-                  <input
-                    id="email"
-                    className={styles.input}
-                    type="email"
-                    placeholder="Enter your email"
-                    {...register("userEmail", { required: true })}
-                    autoComplete="email"
-                    style={{ color: "white" }}
-                  />
 
                   <label className={styles.label} htmlFor="role">
                     Role
@@ -91,11 +83,11 @@ function Register() {
                   <select
                     id="role"
                     className={styles.select}
-                    {...register("role", { required: true })}
+                    {...register("userRole", { required: true })}
                   >
                     <option value="">Select a role</option>
                     <option value="admin">Admin</option>
-                    <option value="user">User</option>
+                    <option value="employee">User</option>
                   </select>
                   <button className={styles.button} type="submit">
                     Register
