@@ -16,6 +16,9 @@ import Reports from './Reports'
 import EditUserForm from './EditUserForm'
 import Maintenance from './Maintenance'
 import Registration from './Registration';
+import Unauthorized from './Unauthorized'
+
+import ProtectedRoute from './components/ProtectedRoute'
 
 import Sales from './Sale'
 
@@ -30,22 +33,105 @@ createRoot(document.getElementById('root')).render(
         <Route path="/" element={<Layout />} >
           {/* index route is basically just default child route */}
           <Route index element={<Login />} />
-          <Route path="home" element={<Home />} />
-          <Route path="homeemployee" element={<HomepageEmployee />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="entry" element={<Entry />} />
           <Route path="transact" element={<Transact />} />
           <Route path="transacthistory" element={<TransactHistory />} />
-          <Route path="login" element={<Login />} />
           <Route path="notifications" element={<Notifications />} />
-          <Route path="sales" element={<Sales />} />
-          <Route path="register" element={<Register />} />
-          <Route path="edituser" element={<EditUserForm />} />
-
+          <Route path="homeemployee" element={<HomepageEmployee />} />
           <Route path="help" element={<Help />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="maintenance" element={<Maintenance />} />
-          <Route path="registration" element={<Registration />} />
+
+
+
+          <Route path="unauthorized" element={<Unauthorized />} />
+
+          <Route
+            path="/login"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Login />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inventory"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Inventory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sales"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Sales />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/entry"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Entry />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Register />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/edituser"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <EditUserForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Reports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Maintenance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/maintenance"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Maintenance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/registration"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Registration />
+              </ProtectedRoute>
+            }
+          />
+
         </Route>
       </Routes>
     </Provider>
