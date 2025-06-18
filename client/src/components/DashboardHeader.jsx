@@ -67,7 +67,7 @@ const DashboardHeader = () => {
         <HStack spacing={2}>
           <Icon as={FiUser} boxSize={6} />
           {/* <Text fontWeight="medium">{userType}</Text> */}
-          <Text fontWeight="medium">{userRole}</Text>
+          <Text fontWeight="medium" textTransform={"capitalize"}>{userRole}</Text>
         </HStack>
         <Separator orientation="vertical" height="24px" borderColor="white" />
         <Button

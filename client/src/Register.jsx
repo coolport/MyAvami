@@ -50,7 +50,7 @@ function Register() {
                   <input
                     id="username"
                     className={styles.input}
-                    placeholder="Enter your username"
+                    placeholder="Enter Username"
                     {...register("userUsername", { required: true })}
                     autoComplete="username"
                     style={{ color: "black" }}
@@ -61,7 +61,7 @@ function Register() {
                     id="password"
                     className={styles.input}
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder="Enter Password"
                     {...register("userPassword", { required: true })}
                     autoComplete="new-password"
                     style={{ color: "black" }}
@@ -71,7 +71,7 @@ function Register() {
                   <input
                     id="fullname"
                     className={styles.input}
-                    placeholder="Enter your full name"
+                    placeholder="Enter Full Name"
                     {...register("userFullName", { required: true })}
                     style={{ color: "black" }}
                   />

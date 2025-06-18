@@ -13,6 +13,7 @@ const features = [
   { label: 'Transact', icon: FiShoppingCart, path: '/sales' },
   { label: 'Transaction History', icon: FiClock, path: '/transacthistory' },
   { label: 'Notifications', icon: FiBell, path: '/notifications' },
+  { label: 'Help', icon: FiBell, path: '/help' },
 ];
 
 const HomepageEmployee = () => {
