@@ -1,0 +1,44 @@
+
+import React, { useEffect, useState } from 'react';
+import { Navigate } from 'react-router';
+import Unauthorized from '../Unauthorized.jsx';
+
+const ProtectedRoute = ({ allowedRoles, children }) => {
+  const [isAuthorized, setIsAuthorized] = useState(null); // null = loading
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('http://localhost:5555/auth/me', {
+          credentials: 'include',
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setUserRole(data.user.role);
+
+          if (allowedRoles.includes(data.user.role)) {
+            setIsAuthorized(true);
+          } else {
+            setIsAuthorized(false);
+          }
+        } else {
+          setIsAuthorized(false);
+        }
+      } catch (error) {
+        console.error('Error verifying user:', error);
+        setIsAuthorized(false);
+      }
+    };
+
+    fetchUser();
+  }, [allowedRoles]);
+
+  if (isAuthorized === null) return <div>Loading...</div>;
+  if (!isAuthorized) return <Navigate to="/unauthorized" />;
+
+  return children;
+};
+
+export default ProtectedRoute;
