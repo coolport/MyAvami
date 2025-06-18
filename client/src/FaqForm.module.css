@@ -1,0 +1,97 @@
+.modalTitle {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #3182ce;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.input {
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  font-size: 1rem;
+  color: #2d3748;
+  background: #f7fafc;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: #3182ce;
+  background: #e6f0fa;
+}
+
+.textarea {
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  font-size: 1rem;
+  color: #2d3748;
+  background: #f7fafc;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 8px;
+  width: 100%;
+  min-height: 60px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.textarea:focus {
+  border-color: #3182ce;
+  background: #e6f0fa;
+}
+
+.button {
+  padding: 10px 0;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #3182ce 0%, #63b3ed 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(49,130,206,0.08);
+  margin-right: 8px;
+}
+
+.button:hover {
+  background: linear-gradient(90deg, #2563eb 0%, #4299e1 100%);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.faqList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.faqItem {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #f7fafc;
+}
+
+.faqQuestion {
+  font-weight: 600;
+  color: #3182ce;
+}
+
+.faqAnswer {
+  margin: 4px 0 8px 0;
+  color: #2d3748;
+}
+
+.error {
+  color: #e53e3e;
+  margin-bottom: 8px;
+  text-align: center;
+}

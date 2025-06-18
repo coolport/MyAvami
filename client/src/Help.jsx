@@ -124,8 +124,15 @@ function Help() {
         ))}
       </div>
 
-      <div className={styles.developersTitle}>
-        DEVELOPERS
+      <div style={{
+        textAlign: "center",
+        fontWeight: 700,
+        fontSize: "1.3rem",
+        letterSpacing: "0.05em",
+        margin: "32px 0 16px 0",
+        color: "#3182ce"
+      }}>
+        Developers
       </div>
       <div className={styles.cardsContainer}>
         <FlipCard
