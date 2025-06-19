@@ -3,30 +3,13 @@ import { FiUser, FiLogOut } from 'react-icons/fi';
 import { useNavigate } from 'react-router';
 import avamiLogoWhite from '../assets/logowhite.png';
 import { useEffect, useState } from 'react';
+import { fetchUser } from '../services/getCurrentUser';
 
 const DashboardHeader = () => {
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("http://localhost:5555/auth/me", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setUserRole(data.user.role); // e.g. 'admin' or 'employee'
-        } else {
-          console.error("Failed to fetch user");
-        }
-      } catch (err) {
-        console.error("Error fetching user:", err);
-      }
-    };
-
-    fetchUser();
+    setUserRole(fetchUser()); // e.g. 'admin' or 'employee'
   }, []);
 
   const navigate = useNavigate();

@@ -1,3 +1,7 @@
+// HOC or higher order component AKA wrapper component
+// the purpose of these is to take in other components as a child or sometimes a prop
+// then add behavior, logic, or styling(ie themeprovider as u may know)
+// then renders the child component conditionally or with effects or enhancements from its logic
 
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router';
