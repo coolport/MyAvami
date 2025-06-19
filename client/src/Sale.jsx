@@ -156,10 +156,37 @@ const Sale = () => {
     );
   };
 
-  const total = cart.reduce(
+  const subtotal = cart.reduce(
     (sum, item) => sum + item.itemPrice * item.quantity,
     0
   );
+
+  // Calculate VAT and total with Philippine tax system
+  const calculateTaxAndTotal = () => {
+    const isSeniorPwd = checkoutForm.watch("transactionSeniorPwdDiscount");
+
+    // If Senior/PWD, apply 20% discount to subtotal and no VAT
+    if (isSeniorPwd) {
+      const discountedSubtotal = subtotal * 0.8; // 20% discount
+      return {
+        subtotal,
+        discount: subtotal * 0.2,
+        vat: 0,
+        total: discountedSubtotal
+      };
+    }
+
+    // Regular customer: apply 12% VAT
+    const vat = subtotal * 0.12;
+    const total = subtotal + vat;
+
+    return {
+      subtotal,
+      discount: 0,
+      vat,
+      total
+    };
+  };
 
   const filteredProducts = products.filter((p) =>
     p.itemName.toLowerCase().includes(search.toLowerCase()) ||
@@ -171,13 +198,13 @@ const Sale = () => {
     checkoutForm.reset({
       transactionEmployee: '',
       transactionPaymentMethod: 'cash',
-      transactionDiscount: false,
+      transactionSeniorPwdDiscount: false,
       transactionAmountPaid: ''
     });
   };
 
   const onCheckoutSubmit = async (data) => {
-    const finalTotal = data.transactionDiscount ? total * 0.9 : total;
+    const { total: finalTotal, vat, discount } = calculateTaxAndTotal();
     const amountPaid = parseFloat(data.transactionAmountPaid);
 
     // Validate amount paid
@@ -193,9 +220,12 @@ const Sale = () => {
         transactionCartItemID: item._id,
         transactionCartItemCount: item.quantity
       })),
+      transactionSubtotal: subtotal,
+      transactionVAT: vat,
+      transactionDiscount: discount,
       transactionTotal: finalTotal,
       transactionAmountPaid: amountPaid,
-      transactionDiscount: data.transactionDiscount,
+      transactionSeniorPwdDiscount: data.transactionSeniorPwdDiscount,
       transactionPaymentMethod: data.transactionPaymentMethod
     };
 
@@ -213,10 +243,11 @@ const Sale = () => {
 
         // Send notification about the completed transaction
         try {
+          const customerType = data.transactionSeniorPwdDiscount ? " (Senior/PWD)" : "";
           await postNotifications({
             type: "sale",
             title: "Transaction Completed",
-            message: `Sale completed by ${data.transactionEmployee}. Total: ${formatPrice(finalTotal)}. Payment: ${data.transactionPaymentMethod}`,
+            message: `Sale completed by ${data.transactionEmployee}${customerType}. Total: ${formatPrice(finalTotal)}. Payment: ${data.transactionPaymentMethod}`,
             userInvolved: data.transactionEmployee,
             itemInvolved: cart.map(item => `${item.itemName} (${item.quantity})`).join(", ")
           });
@@ -267,9 +298,11 @@ const Sale = () => {
 
   const calculateChange = () => {
     const amountPaid = parseFloat(checkoutForm.watch("transactionAmountPaid") || 0);
-    const finalTotal = checkoutForm.watch("transactionDiscount") ? total * 0.9 : total;
+    const { total: finalTotal } = calculateTaxAndTotal();
     return Math.max(0, amountPaid - finalTotal);
   };
+
+  const { subtotal: displaySubtotal, vat, discount, total } = calculateTaxAndTotal();
 
   return (
     <>
@@ -407,11 +440,38 @@ const Sale = () => {
           </div>
 
           <div className={styles.cartTotal}>
-            <div className={styles.totalRow}>
-              <span className={styles.totalLabel}>Total:</span>
-              <span className={styles.totalAmount}>
-                {formatPrice(total)}
-              </span>
+            <div className={styles.totalBreakdown}>
+              <div className={styles.totalRow}>
+                <span className={styles.totalLabel}>Subtotal:</span>
+                <span className={styles.totalAmount}>
+                  {formatPrice(subtotal)}
+                </span>
+              </div>
+
+              {discount > 0 && (
+                <div className={styles.totalRow}>
+                  <span className={styles.totalLabel}>Senior/PWD Discount (20%):</span>
+                  <span className={styles.totalAmount} style={{ color: '#38a169' }}>
+                    -{formatPrice(discount)}
+                  </span>
+                </div>
+              )}
+
+              {vat > 0 && (
+                <div className={styles.totalRow}>
+                  <span className={styles.totalLabel}>VAT (12%):</span>
+                  <span className={styles.totalAmount}>
+                    {formatPrice(vat)}
+                  </span>
+                </div>
+              )}
+
+              <div className={styles.totalRow} style={{ borderTop: '1px solid #e2e8f0', paddingTop: '8px', fontWeight: 'bold' }}>
+                <span className={styles.totalLabel}>Total:</span>
+                <span className={styles.totalAmount}>
+                  {formatPrice(total)}
+                </span>
+              </div>
             </div>
 
             <button
@@ -466,6 +526,17 @@ const Sale = () => {
                 </select>
               </div>
 
+              <div className={styles.checkboxContainer}>
+                <input
+                  type="checkbox"
+                  {...checkoutForm.register("transactionSeniorPwdDiscount")}
+                  className={styles.checkbox}
+                />
+                <label className={styles.label}>
+                  Senior Citizen / PWD Discount (20% discount, VAT exempt)
+                </label>
+              </div>
+
               <div className={styles.formField}>
                 <label className={styles.label}>
                   <FiDollarSign style={{ marginRight: '4px' }} />
@@ -492,17 +563,6 @@ const Sale = () => {
                 )}
               </div>
 
-              <div className={styles.checkboxContainer}>
-                <input
-                  type="checkbox"
-                  {...checkoutForm.register("transactionDiscount")}
-                  className={styles.checkbox}
-                />
-                <label className={styles.label}>
-                  Apply 10% Discount
-                </label>
-              </div>
-
               <div className={styles.orderSummary}>
                 <h3 className={styles.orderSummaryTitle}>
                   Order Summary
@@ -513,15 +573,29 @@ const Sale = () => {
                     <span>{formatPrice(item.itemPrice * item.quantity)}</span>
                   </div>
                 ))}
-                {checkoutForm.watch("transactionDiscount") && (
-                  <div className={styles.discountRow}>
-                    <span>Discount (10%):</span>
-                    <span>-{formatPrice(total * 0.1)}</span>
+
+                <div className={styles.orderItem} style={{ borderTop: '1px solid #e2e8f0', paddingTop: '8px', marginTop: '8px' }}>
+                  <span>Subtotal:</span>
+                  <span>{formatPrice(displaySubtotal)}</span>
+                </div>
+
+                {discount > 0 && (
+                  <div className={styles.orderItem} style={{ color: '#38a169' }}>
+                    <span>Senior/PWD Discount (20%):</span>
+                    <span>-{formatPrice(discount)}</span>
                   </div>
                 )}
+
+                {vat > 0 && (
+                  <div className={styles.orderItem}>
+                    <span>VAT (12%):</span>
+                    <span>{formatPrice(vat)}</span>
+                  </div>
+                )}
+
                 <div className={styles.orderTotal}>
                   <span>Total:</span>
-                  <span>{formatPrice(checkoutForm.watch("transactionDiscount") ? total * 0.9 : total)}</span>
+                  <span>{formatPrice(total)}</span>
                 </div>
               </div>
 
