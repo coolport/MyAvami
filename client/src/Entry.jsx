@@ -6,55 +6,6 @@ import PageHeader from "./components/PageHeader";
 import styles from "./styles/Entry.module.css";
 
 function Entry() {
-  const deleteForm = useForm();
-
-  async function dummySubmit() {
-    const url = "http://localhost:5555/products";
-
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify({
-          itemName:
-            "Advil",
-          itemDescription:
-            "Ibuprofen is a nonsteroidal anti-inflammatory drug that is used to relieve pain, fever, and inflammation. This includes painful menstrual periods, migraines, and rheumatoid arthritis.",
-          itemPrice: 10,
-          itemExpiration: "2025-10-24T00:00:00.000Z",
-          itemCount: 80,
-          itemImage:
-            "https://www.rosepharmacy.com/ph1/wp-content/uploads/2016/10/62550.png",
-          itemCategory: "NSAID",
-        }),
-      });
-      console.log(response);
-    } catch (error) {
-      console.error(error.message);
-    }
-  }
-
-
-  // Base delete func to work with
-  // Handle: id not found, check auth/accesslevel?
-  // Better logging.. errors r ambiguous
-  async function onDeleteSubmit(data) {
-    const id = data.deleteId;
-    console.log("Deleting ID: ", id);
-    const url = `http://localhost:5555/products/${id}`;
-
-    try {
-      const response = await fetch(url, {
-        method: "DELETE",
-      });
-      console.log("Response: ", response);
-    } catch (error) {
-      console.error(error.message);
-    }
-  }
 
   return (
     <>
@@ -148,33 +99,6 @@ function Entry() {
             </button>
           </div>
         </form>
-        <br />
-        <form onSubmit={deleteForm.handleSubmit(onDeleteSubmit)}>
-          deleteId: <input {...deleteForm.register("deleteId")} />
-          <Button type="submit">Delete</Button>
-        </form>
-        <Button
-          type="submit"
-          onClick={dummySubmit}
-          className={styles.dummyButton}
-        >
-          Submit Dummy POST req
-        </Button>
-        <br />
-        <Button
-          type="submit"
-          onClick={() => {
-            postNotifications({
-              title: "New Product Added",
-              message: "Product was added successfully.",
-              type: "product",
-              userInvolved: "Usertest",
-            });
-          }}
-          className={styles.notifyButton}
-        >
-          post dummy notif
-        </Button>
       </div>
     </>
   );

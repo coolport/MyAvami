@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import styles from "./styles/Register.module.css";
 import logo from "./assets/logo.png";
 import PageHeader from "./components/PageHeader";
+import { postNotifications } from "./services/notificationService";
 
 function Register() {
   const { register, handleSubmit } = useForm();

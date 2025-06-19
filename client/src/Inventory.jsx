@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
-import { FiSearch, FiEdit2, FiTrash2, FiX } from "react-icons/fi"
+import { FiSearch, FiEdit2, FiTrash2, FiX, FiArrowUp, FiArrowDown } from "react-icons/fi"
 import PageHeader from "./components/PageHeader"
 import styles from "./styles/Inventory.module.css"
 
@@ -12,11 +12,11 @@ function Inventory() {
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState(null)
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
 
   const editForm = useForm()
 
   useEffect(() => {
-
     getItems()
   }, [])
 
@@ -24,14 +24,118 @@ function Inventory() {
     if (!searchTerm.trim()) {
       setFilteredInventory(inventory)
     } else {
-      const filtered = inventory.filter(item =>
-        item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.itemDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.itemCategory.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      // Linear Search Implementation
+      const filtered = linearSearch(inventory, searchTerm)
       setFilteredInventory(filtered)
     }
   }, [inventory, searchTerm])
+
+  // Linear Search Algorithm
+  function linearSearch(array, searchTerm) {
+    const results = []
+    const lowerSearchTerm = searchTerm.toLowerCase()
+
+    // Go through each item one by one (linear search)
+    for (let i = 0; i < array.length; i++) {
+      const item = array[i]
+      const nameMatch = item.itemName.toLowerCase().includes(lowerSearchTerm)
+      const descMatch = item.itemDescription.toLowerCase().includes(lowerSearchTerm)
+      const categoryMatch = item.itemCategory.toLowerCase().includes(lowerSearchTerm)
+
+      // If any field matches, add to results
+      if (nameMatch || descMatch || categoryMatch) {
+        results.push(item)
+      }
+    }
+
+    return results
+  }
+
+  // Merge Sort Algorithm 
+  function mergeSort(array, sortKey) {
+    // Base case: arrays with 0 or 1 element are already sorted
+    if (array.length <= 1) {
+      return array
+    }
+
+    // Divide the array into two halves
+    const middle = Math.floor(array.length / 2)
+    const left = array.slice(0, middle)
+    const right = array.slice(middle)
+
+    // Recursively sort both halves
+    const sortedLeft = mergeSort(left, sortKey)
+    const sortedRight = mergeSort(right, sortKey)
+
+    // Merge the sorted halves
+    return merge(sortedLeft, sortedRight, sortKey)
+  }
+
+  // Merge function for merge sort
+  function merge(left, right, sortKey) {
+    const result = []
+    let leftIndex = 0
+    let rightIndex = 0
+
+    // Compare elements and merge in sorted order
+    while (leftIndex < left.length && rightIndex < right.length) {
+      const leftValue = getValueForSort(left[leftIndex], sortKey)
+      const rightValue = getValueForSort(right[rightIndex], sortKey)
+
+      if (sortConfig.direction === 'asc' ? leftValue <= rightValue : leftValue >= rightValue) {
+        result.push(left[leftIndex])
+        leftIndex++
+      } else {
+        result.push(right[rightIndex])
+        rightIndex++
+      }
+    }
+
+    // Add remaining elements
+    while (leftIndex < left.length) {
+      result.push(left[leftIndex])
+      leftIndex++
+    }
+
+    while (rightIndex < right.length) {
+      result.push(right[rightIndex])
+      rightIndex++
+    }
+
+    return result
+  }
+
+  // Helper function to get sortable value
+  function getValueForSort(item, key) {
+    switch (key) {
+      case 'itemName':
+        return item.itemName.toLowerCase()
+      case 'itemPrice':
+        return parseFloat(item.itemPrice) || 0
+      case 'itemCount':
+        return parseInt(item.itemCount) || 0
+      case 'itemCategory':
+        return item.itemCategory.toLowerCase()
+      case 'itemExpiration':
+        return item.itemExpiration ? new Date(item.itemExpiration).getTime() : 0
+      default:
+        return item[key] || ''
+    }
+  }
+
+  // Sort function using merge sort
+  function handleSort(key) {
+    let direction = 'asc'
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+
+    setSortConfig({ key, direction })
+
+    // Apply merge sort to filtered inventory
+    const sorted = mergeSort([...filteredInventory], key)
+    setFilteredInventory(sorted)
+  }
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
@@ -144,6 +248,16 @@ function Inventory() {
     return { label: 'In Stock', colorScheme: 'green' }
   }
 
+  // Helper function to render sort icon
+  function renderSortIcon(columnKey) {
+    if (sortConfig.key !== columnKey) {
+      return <span className={styles.sortIcon}>⇅</span>
+    }
+    return sortConfig.direction === 'asc' ?
+      <FiArrowUp className={styles.sortIcon} /> :
+      <FiArrowDown className={styles.sortIcon} />
+  }
+
   return (
     <>
       <PageHeader title="Inventory" />
@@ -162,7 +276,7 @@ function Inventory() {
             <FiSearch className={styles.searchIcon} />
             <input
               className={styles.searchInput}
-              placeholder="Search by name, description, or category..."
+              placeholder="Search by name, description, or category... "
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -180,11 +294,36 @@ function Inventory() {
           <table className={styles.table}>
             <thead className={styles.tableHeader}>
               <tr className={styles.tableHeaderRow}>
-                <th className={styles.tableHeaderCell}>Product</th>
-                <th className={styles.tableHeaderCell}>Category</th>
-                <th className={styles.tableHeaderCell}>Price</th>
-                <th className={styles.tableHeaderCell}>Stock</th>
-                <th className={styles.tableHeaderCell}>Expiration</th>
+                <th
+                  className={`${styles.tableHeaderCell} ${styles.sortable}`}
+                  onClick={() => handleSort('itemName')}
+                >
+                  Product {renderSortIcon('itemName')}
+                </th>
+                <th
+                  className={`${styles.tableHeaderCell} ${styles.sortable}`}
+                  onClick={() => handleSort('itemCategory')}
+                >
+                  Category {renderSortIcon('itemCategory')}
+                </th>
+                <th
+                  className={`${styles.tableHeaderCell} ${styles.sortable}`}
+                  onClick={() => handleSort('itemPrice')}
+                >
+                  Price {renderSortIcon('itemPrice')}
+                </th>
+                <th
+                  className={`${styles.tableHeaderCell} ${styles.sortable}`}
+                  onClick={() => handleSort('itemCount')}
+                >
+                  Stock {renderSortIcon('itemCount')}
+                </th>
+                <th
+                  className={`${styles.tableHeaderCell} ${styles.sortable}`}
+                  onClick={() => handleSort('itemExpiration')}
+                >
+                  Expiration {renderSortIcon('itemExpiration')}
+                </th>
                 <th className={styles.tableHeaderCell}>Actions</th>
               </tr>
             </thead>
