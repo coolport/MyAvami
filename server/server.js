@@ -14,9 +14,13 @@ import loginRouter from './routes/auth/login.route.js';
 import logoutRouter from './routes/auth/logout.route.js';
 import helpRouter from './routes/help.route.js';
 import userSessionRouter from './routes/auth/session.route.js';
+import supplierRouter from './routes/supplier.route.js';
+import uploadRouter from './routes/upload.route.js';
 
 import session from "express-session";
 import cors from "cors";
+import { fileURLToPath } from 'url';
+import path from 'path';
 
 // const PORT = process.env.PORT;
 const PORT = 5555;
@@ -39,12 +43,18 @@ app.use(
 
 // app.use(cors());
 app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true               //  allow cookies to be sent
+  origin: ['http://localhost:5555', 'http://localhost:5173'], // Add your frontend URLs
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use('/uploads', express.static('public/uploads'));
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use((req, res, next) => {
   // TODO: move to middlewares as proper logger. +needs more info below etc
@@ -78,6 +88,8 @@ app.use("/login", loginRouter)
 app.use("/logout", logoutRouter)
 app.use("/help", helpRouter)
 app.use("/auth", userSessionRouter)
+app.use("/supplier", supplierRouter)
+app.use("/upload", uploadRouter)
 
 app.get('/test', (req, res) => {
   try {

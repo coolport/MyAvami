@@ -3,9 +3,16 @@ import mongoose from 'mongoose';
 //Create a product schema
 //schema defines struct of documents (records) in mdb collections
 //defines fields(attrib) of object and what data type they are
+
 const productSchema = new mongoose.Schema(
   { //Fields definition (1st arg in schema func)
     itemName: {
+      //ex: ibuprofen
+      type: String,
+      required: true
+    },
+    itemBrandName: {
+      //ex: advil, other ibuprofen brands
       type: String,
       required: true
     },
@@ -33,10 +40,15 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    // Reference to supplier
+    supplierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Supplier',
+      required: true
+    }
   }, { //Options Object (2nd argument in schema func)
   timestamps: true // createdAt, updatedAt (mongoose)
 });
-// Example document (record): https://i.imgur.com/UyJqVSM.png
 
 //Create model
 //from docs: Models are fancy constructors compiled from Schema definitions. An instance of a model is called a document. 
