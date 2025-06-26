@@ -26,7 +26,8 @@
     "express-session": "^1.18.1",
     "jsreport": "^4.9.0",
     "mongodb": "^6.16.0",
-    "mongoose": "^8.14.1"
+    "mongoose": "^8.14.1",
+    "multer": "^2.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
