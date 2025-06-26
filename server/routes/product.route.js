@@ -13,7 +13,8 @@ const productRouter = express.Router();
 // apply auth middleware
 // not working rn, wag muna galaawin
 // productRouter.get("/", requireLogin, requireRole("admin"), getProducts);
-productRouter.get("/", requireLogin, getProducts);
+// productRouter.get("/", requireLogin, getProducts);
+productRouter.get("/", getProducts);
 
 // productRouter.get("/", getProducts);
 
