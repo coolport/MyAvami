@@ -62,7 +62,7 @@ createRoot(document.getElementById('root')).render(
           <Route
             path="/inventory"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
                 <Inventory />
               </ProtectedRoute>
             }
@@ -70,7 +70,7 @@ createRoot(document.getElementById('root')).render(
           <Route
             path="/sales"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
                 <Sales />
               </ProtectedRoute>
             }

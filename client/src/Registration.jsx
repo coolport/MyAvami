@@ -18,10 +18,6 @@ function Registration() {
             <FiBox className={styles.featureIcon} />
             <p className={styles.featureLabel}>Product</p>
           </RouterLink>
-          <RouterLink to="/entry" className={styles.featureCard}>
-            <FiBox className={styles.featureIcon} />
-            <p className={styles.featureLabel}>Supplier</p>
-          </RouterLink>
         </div>
       </div>
     </>

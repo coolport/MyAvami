@@ -5,30 +5,82 @@ import PageHeader from "./components/PageHeader";
 import { postNotifications } from "./services/notificationService"; // Adjust path as needed
 import styles from "./styles/Sale.module.css";
 
+// newest
+const fetchUser = async () => {
+  const url = "http://localhost:5555/auth/me";
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.user; // Return full user object instead of just role
+    } else {
+      console.error("Failed to fetch user");
+      return null;
+    }
+  } catch (err) {
+    console.error("Error fetching user:", err);
+    return null;
+  }
+};
+
 const Sale = () => {
   const [products, setProducts] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [cart, setCart] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const checkoutForm = useForm();
 
   useEffect(() => {
-    fetchProducts();
+    fetchSuppliers().then(() => {
+      fetchProducts();
+    });
+    getCurrentUser();
   }, []);
+
+  const getCurrentUser = async () => {
+    const user = await fetchUser();
+    setCurrentUser(user);
+  };
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
+  async function fetchSuppliers() {
+    try {
+      const response = await fetch("http://localhost:5555/supplier", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`Response status: ${response.status}`);
+      }
+      const json = await response.json();
+      if (json.success && json.data) {
+        setSuppliers(json.data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch suppliers:", e);
+    }
+  }
+
   async function fetchProducts() {
     setLoading(true);
     try {
       const url = "http://localhost:5555/products";
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+      });
 
       if (!response.ok) {
         throw new Error(`Response status: ${response.status}`);
@@ -39,7 +91,29 @@ const Sale = () => {
       const updatedArray = [];
 
       for (const x in data) {
-        updatedArray.push(data[x]);
+        const item = data[x];
+
+        // Handle both populated and non-populated supplier data
+        let supplierName = 'Unknown Supplier';
+        let actualSupplierId = item.supplierId;
+
+        if (typeof item.supplierId === 'object' && item.supplierId !== null) {
+          // Supplier is populated (object)
+          supplierName = item.supplierId.supplierName || 'Unknown Supplier';
+          actualSupplierId = item.supplierId._id;
+        } else if (typeof item.supplierId === 'string') {
+          // Supplier is not populated (just ID)
+          const supplier = suppliers.find(s => s._id === item.supplierId);
+          supplierName = supplier ? supplier.supplierName : 'Unknown Supplier';
+          actualSupplierId = item.supplierId;
+        }
+
+        const itemWithSupplier = {
+          ...item,
+          supplierName: supplierName,
+          supplierId: actualSupplierId
+        };
+        updatedArray.push(itemWithSupplier);
       }
       setProducts(updatedArray);
     } catch (error) {
@@ -57,6 +131,7 @@ const Sale = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ itemCount: newStock }),
       });
 
@@ -147,10 +222,39 @@ const Sale = () => {
       return;
     }
 
+    if (newQuantity <= 0) {
+      removeFromCart(id);
+      return;
+    }
+
     setCart(
       cart.map((item) =>
         item._id === id
-          ? { ...item, quantity: Math.max(1, newQuantity) }
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
+    );
+  };
+
+  // New function to handle direct quantity input
+  const updateQuantityDirect = (id, newQuantity) => {
+    const item = cart.find(item => item._id === id);
+    const quantity = parseInt(newQuantity) || 1;
+
+    if (quantity > item.itemCount) {
+      showToast("Cannot exceed available stock", "error");
+      return;
+    }
+
+    if (quantity <= 0) {
+      removeFromCart(id);
+      return;
+    }
+
+    setCart(
+      cart.map((item) =>
+        item._id === id
+          ? { ...item, quantity: quantity }
           : item
       )
     );
@@ -161,9 +265,9 @@ const Sale = () => {
     0
   );
 
-  // Calculate VAT and total with Philippine tax system
+  // Calculate VAT and total with Philippine tax system - FIXED
   const calculateTaxAndTotal = () => {
-    const isSeniorPwd = checkoutForm.watch("transactionSeniorPwdDiscount");
+    const isSeniorPwd = checkoutForm.watch("transactionSeniorPwdDiscount") || false;
 
     // If Senior/PWD, apply 20% discount to subtotal and no VAT
     if (isSeniorPwd) {
@@ -190,13 +294,18 @@ const Sale = () => {
 
   const filteredProducts = products.filter((p) =>
     p.itemName.toLowerCase().includes(search.toLowerCase()) ||
-    p.itemCategory.toLowerCase().includes(search.toLowerCase())
+    p.itemCategory.toLowerCase().includes(search.toLowerCase()) ||
+    (p.itemBrandName && p.itemBrandName.toLowerCase().includes(search.toLowerCase()))
   );
 
   const handleCheckout = () => {
+    if (!currentUser) {
+      showToast("Please log in to complete transactions", "error");
+      return;
+    }
     setShowCheckout(true);
     checkoutForm.reset({
-      transactionEmployee: '',
+      transactionEmployee: currentUser.username || currentUser.email || 'Unknown User',
       transactionPaymentMethod: 'cash',
       transactionSeniorPwdDiscount: false,
       transactionAmountPaid: ''
@@ -205,7 +314,7 @@ const Sale = () => {
 
   const onCheckoutSubmit = async (data) => {
     const { total: finalTotal, vat, discount } = calculateTaxAndTotal();
-    const amountPaid = parseFloat(data.transactionAmountPaid);
+    const amountPaid = parseFloat(data.transactionAmountPaid) || 0;
 
     // Validate amount paid
     if (amountPaid < finalTotal) {
@@ -235,6 +344,7 @@ const Sale = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(transactionData),
       });
 
@@ -290,10 +400,32 @@ const Sale = () => {
     }).format(price);
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No expiration';
+    return new Date(dateString).toLocaleDateString('en-PH');
+  };
+
   const getStockStatus = (count) => {
     if (count === 0) return { label: 'Out of Stock', color: '#e53e3e' };
     if (count <= 10) return { label: 'Low Stock', color: '#dd6b20' };
     return { label: 'In Stock', color: '#38a169' };
+  };
+
+  const getExpirationStatus = (dateString) => {
+    if (!dateString) return { color: '#718096', isExpired: false, isNearExpiry: false };
+
+    const expirationDate = new Date(dateString);
+    const today = new Date();
+    const daysDiff = Math.ceil((expirationDate - today) / (1000 * 60 * 60 * 24));
+
+    if (daysDiff < 0) {
+      return { color: '#e53e3e', isExpired: true, isNearExpiry: false }; // Expired - red
+    } else if (daysDiff <= 7) {
+      return { color: '#dd6b20', isExpired: false, isNearExpiry: true }; // Near expiry - orange
+    } else if (daysDiff <= 30) {
+      return { color: '#ecc94b', isExpired: false, isNearExpiry: true }; // Close to expiry - yellow
+    }
+    return { color: '#38a169', isExpired: false, isNearExpiry: false }; // Fresh - green
   };
 
   const calculateChange = () => {
@@ -303,6 +435,24 @@ const Sale = () => {
   };
 
   const { subtotal: displaySubtotal, vat, discount, total } = calculateTaxAndTotal();
+
+  // Improved image URL handling
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return "https://via.placeholder.com/200x150?text=No+Image";
+
+    // If it's already a full URL, return as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+
+    // If it's a relative path starting with /, prepend the server URL
+    if (imageUrl.startsWith('/')) {
+      return `http://localhost:5555${imageUrl}`;
+    }
+
+    // If it doesn't start with /, add the leading slash
+    return `http://localhost:5555/${imageUrl}`;
+  };
 
   return (
     <>
@@ -326,7 +476,7 @@ const Sale = () => {
           <div className={styles.searchContainer}>
             <FiSearch className={styles.searchIcon} />
             <input
-              placeholder="Search products by name or category..."
+              placeholder="Search products by name, brand, or category..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className={styles.searchInput}
@@ -341,16 +491,36 @@ const Sale = () => {
             <div className={styles.productsGrid}>
               {filteredProducts.map((product) => {
                 const stockStatus = getStockStatus(product.itemCount);
+                const expirationStatus = getExpirationStatus(product.itemExpiration);
                 return (
                   <div key={product._id} className={styles.productCard}>
                     <img
-                      src={product.itemImage}
+                      src={getImageUrl(product.itemImage)}
                       alt={product.itemName}
                       className={styles.productImage}
+                      onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/200x150?text=No+Image";
+                      }}
                     />
                     <h3 className={styles.productName}>
                       {product.itemName}
                     </h3>
+                    <p
+                      className={styles.productExpiration}
+                      style={{
+                        color: expirationStatus.color,
+                        fontWeight: expirationStatus.isExpired || expirationStatus.isNearExpiry ? 'bold' : 'normal'
+                      }}
+                    >
+                      {expirationStatus.isExpired ? '⚠️ EXPIRED: ' :
+                        expirationStatus.isNearExpiry ? '⏰ Expires: ' : 'Expires: '}
+                      {formatDate(product.itemExpiration)}
+                    </p>
+                    {product.itemBrandName && (
+                      <p className={styles.productBrand}>
+                        {product.itemBrandName}
+                      </p>
+                    )}
                     <p className={styles.productCategory}>
                       {product.itemCategory}
                     </p>
@@ -366,10 +536,10 @@ const Sale = () => {
                     <button
                       className={styles.addToCartButton}
                       onClick={() => addToCart(product)}
-                      disabled={product.itemCount === 0}
+                      disabled={product.itemCount === 0 || expirationStatus.isExpired}
                     >
                       <FiPlus style={{ marginRight: '4px' }} />
-                      Add to Cart
+                      {expirationStatus.isExpired ? 'Expired' : 'Add to Cart'}
                     </button>
                   </div>
                 );
@@ -398,6 +568,14 @@ const Sale = () => {
                       <h4 className={styles.cartItemName}>
                         {item.itemName}
                       </h4>
+                      {item.itemBrandName && (
+                        <p className={styles.cartItemBrand}>
+                          {item.itemBrandName}
+                        </p>
+                      )}
+                      <p className={styles.cartItemExpiration}>
+                        Expires: {formatDate(item.itemExpiration)}
+                      </p>
                       <p className={styles.cartItemPrice}>
                         {formatPrice(item.itemPrice)} each
                       </p>
@@ -419,9 +597,14 @@ const Sale = () => {
                       >
                         <FiMinus />
                       </button>
-                      <span className={styles.quantity}>
-                        {item.quantity}
-                      </span>
+                      <input
+                        type="number"
+                        min="1"
+                        max={item.itemCount}
+                        value={item.quantity}
+                        onChange={(e) => updateQuantityDirect(item._id, e.target.value)}
+                        className={styles.quantityInput}
+                      />
                       <button
                         className={styles.secondaryButton}
                         onClick={() => updateQuantity(item._id, 1)}
@@ -477,10 +660,10 @@ const Sale = () => {
             <button
               className={styles.checkoutButton}
               onClick={handleCheckout}
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 || !currentUser}
             >
               <FiCreditCard style={{ marginRight: '8px' }} />
-              Checkout
+              {!currentUser ? 'Please Login' : 'Checkout'}
             </button>
           </div>
         </div>
@@ -502,12 +685,13 @@ const Sale = () => {
               <div className={styles.formField}>
                 <label className={styles.label}>
                   <FiUser style={{ marginRight: '4px' }} />
-                  Employee Name *
+                  Employee
                 </label>
                 <input
-                  {...checkoutForm.register("transactionEmployee", { required: true })}
-                  placeholder="Enter employee name"
-                  className={styles.input}
+                  {...checkoutForm.register("transactionEmployee")}
+                  readOnly
+                  className={`${styles.input} ${styles.readOnly}`}
+                  style={{ backgroundColor: '#f7fafc', cursor: 'not-allowed' }}
                 />
               </div>
 
@@ -539,7 +723,6 @@ const Sale = () => {
 
               <div className={styles.formField}>
                 <label className={styles.label}>
-                  {/* <FiDollarSign style={{ marginRight: '4px' }} /> */}
                   Amount Paid *
                 </label>
                 <input

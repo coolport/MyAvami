@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
-import { FiSearch, FiEdit2, FiTrash2, FiX, FiArrowUp, FiArrowDown } from "react-icons/fi"
+import { FiSearch, FiEdit2, FiTrash2, FiX, FiArrowUp, FiArrowDown, FiRefreshCw } from "react-icons/fi"
 import PageHeader from "./components/PageHeader"
+import { printReorderForm } from "./services/reorderTemplate"
 import styles from "./styles/Inventory.module.css"
 
 function Inventory() {
   const [inventory, setInventory] = useState([])
   const [filteredInventory, setFilteredInventory] = useState([])
+  const [suppliers, setSuppliers] = useState([])
   const [editingItem, setEditingItem] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -17,14 +19,15 @@ function Inventory() {
   const editForm = useForm()
 
   useEffect(() => {
-    getItems()
+    fetchSuppliers().then(() => {
+      getItems()
+    })
   }, [])
 
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredInventory(inventory)
     } else {
-      // Linear Search Implementation
       const filtered = linearSearch(inventory, searchTerm)
       setFilteredInventory(filtered)
     }
@@ -35,15 +38,15 @@ function Inventory() {
     const results = []
     const lowerSearchTerm = searchTerm.toLowerCase()
 
-    // Go through each item one by one (linear search)
     for (let i = 0; i < array.length; i++) {
       const item = array[i]
       const nameMatch = item.itemName.toLowerCase().includes(lowerSearchTerm)
+      const brandMatch = item.itemBrandName ? item.itemBrandName.toLowerCase().includes(lowerSearchTerm) : false
       const descMatch = item.itemDescription.toLowerCase().includes(lowerSearchTerm)
       const categoryMatch = item.itemCategory.toLowerCase().includes(lowerSearchTerm)
+      const supplierMatch = item.supplierName ? item.supplierName.toLowerCase().includes(lowerSearchTerm) : false
 
-      // If any field matches, add to results
-      if (nameMatch || descMatch || categoryMatch) {
+      if (nameMatch || brandMatch || descMatch || categoryMatch || supplierMatch) {
         results.push(item)
       }
     }
@@ -53,31 +56,25 @@ function Inventory() {
 
   // Merge Sort Algorithm 
   function mergeSort(array, sortKey) {
-    // Base case: arrays with 0 or 1 element are already sorted
     if (array.length <= 1) {
       return array
     }
 
-    // Divide the array into two halves
     const middle = Math.floor(array.length / 2)
     const left = array.slice(0, middle)
     const right = array.slice(middle)
 
-    // Recursively sort both halves
     const sortedLeft = mergeSort(left, sortKey)
     const sortedRight = mergeSort(right, sortKey)
 
-    // Merge the sorted halves
     return merge(sortedLeft, sortedRight, sortKey)
   }
 
-  // Merge function for merge sort
   function merge(left, right, sortKey) {
     const result = []
     let leftIndex = 0
     let rightIndex = 0
 
-    // Compare elements and merge in sorted order
     while (leftIndex < left.length && rightIndex < right.length) {
       const leftValue = getValueForSort(left[leftIndex], sortKey)
       const rightValue = getValueForSort(right[rightIndex], sortKey)
@@ -91,7 +88,6 @@ function Inventory() {
       }
     }
 
-    // Add remaining elements
     while (leftIndex < left.length) {
       result.push(left[leftIndex])
       leftIndex++
@@ -105,11 +101,12 @@ function Inventory() {
     return result
   }
 
-  // Helper function to get sortable value
   function getValueForSort(item, key) {
     switch (key) {
       case 'itemName':
         return item.itemName.toLowerCase()
+      case 'itemBrandName':
+        return (item.itemBrandName || '').toLowerCase()
       case 'itemPrice':
         return parseFloat(item.itemPrice) || 0
       case 'itemCount':
@@ -118,12 +115,13 @@ function Inventory() {
         return item.itemCategory.toLowerCase()
       case 'itemExpiration':
         return item.itemExpiration ? new Date(item.itemExpiration).getTime() : 0
+      case 'supplierName':
+        return (item.supplierName || '').toLowerCase()
       default:
         return item[key] || ''
     }
   }
 
-  // Sort function using merge sort
   function handleSort(key) {
     let direction = 'asc'
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -132,7 +130,6 @@ function Inventory() {
 
     setSortConfig({ key, direction })
 
-    // Apply merge sort to filtered inventory
     const sorted = mergeSort([...filteredInventory], key)
     setFilteredInventory(sorted)
   }
@@ -140,6 +137,24 @@ function Inventory() {
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 3000)
+  }
+
+  async function fetchSuppliers() {
+    try {
+      const response = await fetch("http://localhost:5555/supplier", {
+        method: "GET",
+        credentials: "include",
+      })
+      if (!response.ok) {
+        throw new Error(`Response status: ${response.status}`)
+      }
+      const json = await response.json()
+      if (json.success && json.data) {
+        setSuppliers(json.data)
+      }
+    } catch (e) {
+      console.error("Failed to fetch suppliers:", e)
+    }
   }
 
   async function getItems() {
@@ -158,7 +173,29 @@ function Inventory() {
       const updatedArray = []
 
       for (const x in data) {
-        updatedArray.push(data[x])
+        const item = data[x]
+
+        // Handle both populated and non-populated supplier data
+        let supplierName = 'Unknown Supplier'
+        let actualSupplierId = item.supplierId
+
+        if (typeof item.supplierId === 'object' && item.supplierId !== null) {
+          // Supplier is populated (object)
+          supplierName = item.supplierId.supplierName || 'Unknown Supplier'
+          actualSupplierId = item.supplierId._id
+        } else if (typeof item.supplierId === 'string') {
+          // Supplier is not populated (just ID)
+          const supplier = suppliers.find(s => s._id === item.supplierId)
+          supplierName = supplier ? supplier.supplierName : 'Unknown Supplier'
+          actualSupplierId = item.supplierId
+        }
+
+        const itemWithSupplier = {
+          ...item,
+          supplierName: supplierName,
+          supplierId: actualSupplierId // Keep the actual ID for editing
+        }
+        updatedArray.push(itemWithSupplier)
       }
       setInventory(updatedArray)
     } catch (e) {
@@ -169,16 +206,36 @@ function Inventory() {
     }
   }
 
+  // Improved image URL handling
+  function getImageUrl(imageUrl) {
+    if (!imageUrl) return "https://via.placeholder.com/60?text=No+Image"
+
+    // If it's already a full URL, return as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl
+    }
+
+    // If it's a relative path starting with /, prepend the server URL
+    if (imageUrl.startsWith('/')) {
+      return `http://localhost:5555${imageUrl}`
+    }
+
+    // If it doesn't start with /, add the leading slash
+    return `http://localhost:5555/${imageUrl}`
+  }
+
   function handleEdit(item) {
     setEditingItem(item)
     editForm.reset({
       itemName: item.itemName,
+      itemBrandName: item.itemBrandName || '',
       itemDescription: item.itemDescription,
       itemPrice: item.itemPrice,
       itemExpiration: item.itemExpiration ? item.itemExpiration.split('T')[0] : '',
       itemCount: item.itemCount,
       itemImage: item.itemImage,
-      itemCategory: item.itemCategory
+      itemCategory: item.itemCategory,
+      supplierId: item.supplierId
     })
   }
 
@@ -190,6 +247,7 @@ function Inventory() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(data),
       })
 
@@ -215,6 +273,7 @@ function Inventory() {
     try {
       const response = await fetch(url, {
         method: "DELETE",
+        credentials: "include",
       })
 
       if (response.ok) {
@@ -228,6 +287,20 @@ function Inventory() {
       console.error("Delete error:", error.message)
       showToast("Failed to delete inventory item", "error")
     }
+  }
+
+  // NEW: Handle reorder functionality
+  function handleReorder(item) {
+    // Find the supplier data for this item
+    const supplier = suppliers.find(s => s._id === item.supplierId)
+
+    if (!supplier) {
+      showToast("Supplier information not found. Cannot generate reorder form.", "error")
+      return
+    }
+
+    // Call the printReorderForm function from the template
+    printReorderForm(item, supplier, showToast)
   }
 
   function formatPrice(price) {
@@ -248,7 +321,11 @@ function Inventory() {
     return { label: 'In Stock', colorScheme: 'green' }
   }
 
-  // Helper function to render sort icon
+  // NEW: Check if item needs reordering (out of stock or low stock)
+  function needsReorder(count) {
+    return count <= 10 // Out of stock (0) or low stock (<=10)
+  }
+
   function renderSortIcon(columnKey) {
     if (sortConfig.key !== columnKey) {
       return <span className={styles.sortIcon}>⇅</span>
@@ -276,7 +353,7 @@ function Inventory() {
             <FiSearch className={styles.searchIcon} />
             <input
               className={styles.searchInput}
-              placeholder="Search by name, description, or category... "
+              placeholder="Search by name, brand, description, category, or supplier..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -308,6 +385,12 @@ function Inventory() {
                 </th>
                 <th
                   className={`${styles.tableHeaderCell} ${styles.sortable}`}
+                  onClick={() => handleSort('supplierName')}
+                >
+                  Supplier {renderSortIcon('supplierName')}
+                </th>
+                <th
+                  className={`${styles.tableHeaderCell} ${styles.sortable}`}
                   onClick={() => handleSort('itemPrice')}
                 >
                   Price {renderSortIcon('itemPrice')}
@@ -330,7 +413,7 @@ function Inventory() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className={styles.loadingCell}>
+                  <td colSpan={7} className={styles.loadingCell}>
                     <div className={styles.loadingContainer}>
                       <div className={styles.spinner}></div>
                       <span>Loading inventory...</span>
@@ -339,7 +422,7 @@ function Inventory() {
                 </tr>
               ) : filteredInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className={styles.emptyCell}>
+                  <td colSpan={7} className={styles.emptyCell}>
                     <p className={styles.emptyText}>
                       {searchTerm
                         ? "No items match your search"
@@ -358,17 +441,23 @@ function Inventory() {
                       <td className={styles.tableCell}>
                         <div className={styles.productCell}>
                           <img
-                            src={item.itemImage || "https://via.placeholder.com/60"}
+                            src={getImageUrl(item.itemImage)}
                             alt={item.itemName}
                             className={styles.productImage}
                             onError={(e) => {
-                              e.target.src = "https://via.placeholder.com/60"
+                              console.log('Image failed to load:', item.itemImage)
+                              e.target.src = "https://via.placeholder.com/60?text=No+Image"
                             }}
                           />
                           <div className={styles.productInfo}>
                             <h3 className={styles.productName}>
                               {item.itemName}
                             </h3>
+                            {item.itemBrandName && (
+                              <p className={styles.productBrand}>
+                                Brand: {item.itemBrandName}
+                              </p>
+                            )}
                             <p className={styles.productDescription}>
                               {item.itemDescription}
                             </p>
@@ -378,6 +467,11 @@ function Inventory() {
                       <td className={styles.tableCell}>
                         <span className={`${styles.badge} ${styles.purple}`}>
                           {item.itemCategory}
+                        </span>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <span className={`${styles.badge} ${styles.blue}`}>
+                          {item.supplierName}
                         </span>
                       </td>
                       <td className={styles.tableCell}>
@@ -416,6 +510,17 @@ function Inventory() {
                             <FiTrash2 />
                             Delete
                           </button>
+                          {/* NEW: Reorder button - only show for items that need reordering */}
+                          {needsReorder(item.itemCount) && (
+                            <button
+                              className={`${styles.button} ${styles.reorder}`}
+                              onClick={() => handleReorder(item)}
+                              title={item.itemCount === 0 ? "Item is out of stock - Generate urgent reorder form" : "Item is low in stock - Generate reorder form"}
+                            >
+                              <FiRefreshCw />
+                              Reorder
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -459,12 +564,24 @@ function Inventory() {
 
                 <div className={styles.formGroup}>
                   <label className={styles.label}>
-                    Description *
+                    Brand Name
                   </label>
                   <input
+                    {...editForm.register("itemBrandName")}
+                    placeholder="Enter brand name"
+                    className={styles.input}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
+                    Description *
+                  </label>
+                  <textarea
                     {...editForm.register("itemDescription", { required: true })}
                     placeholder="Enter description"
                     className={styles.input}
+                    style={{ minHeight: "80px", resize: "vertical" }}
                   />
                 </div>
 
@@ -476,6 +593,8 @@ function Inventory() {
                     <input
                       {...editForm.register("itemPrice", { required: true })}
                       type="number"
+                      step="0.01"
+                      min="0"
                       placeholder="0.00"
                       className={styles.input}
                     />
@@ -487,6 +606,7 @@ function Inventory() {
                     <input
                       {...editForm.register("itemCount", { required: true })}
                       type="number"
+                      min="0"
                       placeholder="0"
                       className={styles.input}
                     />
@@ -502,6 +622,23 @@ function Inventory() {
                     placeholder="Enter category"
                     className={styles.input}
                   />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
+                    Supplier *
+                  </label>
+                  <select
+                    {...editForm.register("supplierId", { required: true })}
+                    className={styles.select}
+                  >
+                    <option value="">Select a supplier</option>
+                    {suppliers.map((supplier) => (
+                      <option key={supplier._id} value={supplier._id}>
+                        {supplier.supplierName} - {supplier.supplierEmail}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className={styles.formGroup}>
