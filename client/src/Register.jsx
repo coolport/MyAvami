@@ -6,7 +6,7 @@ import PageHeader from "./components/PageHeader";
 import { postNotifications } from "./services/notificationService";
 
 function Register() {
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, reset } = useForm();
 
   async function onSubmit(data) {
     const url = "http://localhost:5555/users";
@@ -20,18 +20,62 @@ function Register() {
         },
         body: JSON.stringify(data)
       });
-      console.log(response);
 
       const result = await response.json();
       console.log("Response status:", response.status);
       console.log("Response data:", result);
 
-      if (!response.ok) {
+      if (response.ok) {
+        console.log("User registered successfully:", result);
+
+        // Send success notification
+        try {
+          await postNotifications({
+            type: "user_registration",
+            title: "User Registered",
+            message: `New ${data.userRole} account created for ${data.userFullName} (${data.userUsername})`,
+            userInvolved: data.userFullName,
+            itemInvolved: `User Account: ${data.userUsername}`
+          });
+        } catch (notificationError) {
+          console.error("Failed to send registration notification:", notificationError);
+          // Don't block the success if notification fails
+        }
+
+        reset(); // Clear the form after successful registration
+
+      } else {
         console.error("Error response:", result);
+
+        // Send error notification
+        try {
+          await postNotifications({
+            type: "error",
+            title: "Registration Failed",
+            message: `Failed to register user ${data.userUsername}: ${result.message || 'Unknown error'}`,
+            userInvolved: data.userFullName || "Unknown User",
+            itemInvolved: `Registration Attempt: ${data.userUsername}`
+          });
+        } catch (notificationError) {
+          console.error("Failed to send error notification:", notificationError);
+        }
       }
 
     } catch (error) {
-      console.error("ERROR", error.message);
+      console.error("Network error:", error.message);
+
+      // Send network error notification
+      try {
+        await postNotifications({
+          type: "error",
+          title: "Network Error",
+          message: `Failed to connect to server during registration: ${error.message}`,
+          userInvolved: data.userFullName || "Unknown User",
+          itemInvolved: "User Registration"
+        });
+      } catch (notificationError) {
+        console.error("Failed to send network error notification:", notificationError);
+      }
     }
   }
 
@@ -56,7 +100,6 @@ function Register() {
                     autoComplete="username"
                     style={{ color: "black" }}
                   />
-
                   <Text color="gray.700">Password</Text>
                   <input
                     id="password"
@@ -67,7 +110,6 @@ function Register() {
                     autoComplete="new-password"
                     style={{ color: "black" }}
                   />
-
                   <Text color="gray.700">Full Name</Text>
                   <input
                     id="fullname"
@@ -76,8 +118,6 @@ function Register() {
                     {...register("userFullName", { required: true })}
                     style={{ color: "black" }}
                   />
-
-
                   <label className={styles.label} htmlFor="role">
                     Role
                   </label>

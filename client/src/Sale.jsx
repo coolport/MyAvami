@@ -539,7 +539,7 @@ const Sale = () => {
 
               <div className={styles.formField}>
                 <label className={styles.label}>
-                  <FiDollarSign style={{ marginRight: '4px' }} />
+                  {/* <FiDollarSign style={{ marginRight: '4px' }} /> */}
                   Amount Paid *
                 </label>
                 <input
