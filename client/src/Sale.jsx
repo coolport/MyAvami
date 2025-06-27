@@ -274,7 +274,7 @@ const Sale = () => {
 
   // Calculate VAT and total with Philippine tax system - FIXED
   const calculateTaxAndTotal = () => {
-    const isSeniorPwd = checkoutForm.watch("transactionSeniorPwdDiscount") || false;
+    const isSeniorPwd = checkoutForm.watch("transactionSeniorPwdDiscount");
 
     // If Senior/PWD, apply 20% discount to subtotal and no VAT
     if (isSeniorPwd) {
@@ -314,12 +314,15 @@ const Sale = () => {
     checkoutForm.reset({
       transactionEmployee: currentUser.username || currentUser.email || 'Unknown User',
       transactionPaymentMethod: 'cash',
-      transactionSeniorPwdDiscount: false,
+      transactionSeniorPwdDiscount: false, // Explicitly set to false
       transactionAmountPaid: ''
     });
   };
 
   const onCheckoutSubmit = async (data) => {
+    // Convert checkbox to boolean explicitly
+    const seniorPwdDiscount = Boolean(data.transactionSeniorPwdDiscount);
+
     const { total: finalTotal, vat, discount } = calculateTaxAndTotal();
     const amountPaid = parseFloat(data.transactionAmountPaid) || 0;
 
@@ -335,14 +338,14 @@ const Sale = () => {
         transactionCartItemName: item.itemName,
         transactionCartItemID: item._id,
         transactionCartItemCount: item.quantity,
-        transactionCartItemPrice: item.itemPrice // Add this line
+        transactionCartItemPrice: item.itemPrice
       })),
       transactionSubtotal: subtotal,
       transactionVAT: vat,
-      transactionDiscount: discount,
+      transactionDiscount: seniorPwdDiscount, // Boolean flag only
       transactionTotal: finalTotal,
       transactionAmountPaid: amountPaid,
-      transactionSeniorPwdDiscount: data.transactionSeniorPwdDiscount,
+      transactionSeniorPwdDiscount: seniorPwdDiscount,
       transactionPaymentMethod: data.transactionPaymentMethod
     };
 
@@ -737,14 +740,15 @@ const Sale = () => {
               </div>
 
               <div className={styles.checkboxContainer}>
-                <input
-                  type="checkbox"
-                  id="seniorPwdDiscount"
-                  {...checkoutForm.register("transactionSeniorPwdDiscount")}
-                  className={styles.checkbox}
-                />
-                <label htmlFor="seniorPwdDiscount" className={styles.label}>
-                  Senior Citizen / PWD Discount (20% discount, VAT exempt)
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    {...checkoutForm.register("transactionSeniorPwdDiscount")}
+                    className={styles.checkbox}
+                  />
+                  <span className={styles.checkboxText}>
+                    Senior Citizen / PWD Discount (20% discount, VAT exempt)
+                  </span>
                 </label>
               </div>
 

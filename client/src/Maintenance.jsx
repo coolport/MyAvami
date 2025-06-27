@@ -1,13 +1,15 @@
 import { useState } from "react";
 import styles from "./styles/Maintenance.module.css";
 import PageHeader from "./components/PageHeader";
-import { FiUsers, FiHelpCircle } from "react-icons/fi";
+import { FiUsers, FiHelpCircle, FiTruck } from "react-icons/fi";
 import EditUserForm from "./EditUserForm";
 import FaqForm from "./FaqForm";
+import EditSupplierForm from "./EditSupplierForm";
 
 function Maintenance() {
   const [showEditUser, setShowEditUser] = useState(false);
   const [showFaqForm, setShowFaqForm] = useState(false);
+  const [showEditSupplier, setShowEditSupplier] = useState(false);
 
   return (
     <>
@@ -30,7 +32,17 @@ function Maintenance() {
             <FiHelpCircle className={styles.featureIcon} />
             <p className={styles.featureLabel}>FAQs</p>
           </div>
+          <div
+            className={styles.featureCard}
+            style={{ cursor: "pointer" }}
+            onClick={() => setShowEditSupplier(true)}
+          >
+            <FiTruck className={styles.featureIcon} />
+            <p className={styles.featureLabel}>Suppliers</p>
+          </div>
         </div>
+
+        {/* Edit User Modal */}
         {showEditUser && (
           <div
             style={{
@@ -61,6 +73,8 @@ function Maintenance() {
             </div>
           </div>
         )}
+
+        {/* FAQ Form Modal */}
         {showFaqForm && (
           <div
             style={{
@@ -92,6 +106,38 @@ function Maintenance() {
               onClick={(e) => e.stopPropagation()}
             >
               <FaqForm onClose={() => setShowFaqForm(false)} />
+            </div>
+          </div>
+        )}
+
+        {/* Edit Supplier Modal */}
+        {showEditSupplier && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+            }}
+            onClick={() => setShowEditSupplier(false)}
+          >
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: 16,
+                padding: 24,
+                minWidth: 350,
+                maxWidth: "95vw",
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <EditSupplierForm />
             </div>
           </div>
         )}

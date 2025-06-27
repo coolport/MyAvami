@@ -20,10 +20,8 @@ const EditUserForm = () => {
   const fetchUsers = async () => {
     const url = "http://localhost:5555/users";
     try {
-      // const response = await fetch(url);
       const response = await fetch(url, {
         method: "GET",
-        // needed for all fetch if u want to deal with session/auth/cookies
         credentials: "include",
       })
       const data = await response.json();
@@ -86,11 +84,12 @@ const EditUserForm = () => {
       if (formData.userPassword) updateData.userPassword = formData.userPassword;
       if (formData.userRole) updateData.userRole = formData.userRole;
 
-      const response = await fetch(`/api/users/${selectedUserId}`, {
+      const response = await fetch(`http://localhost:5555/users/${selectedUserId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: "include",
         body: JSON.stringify(updateData)
       });
 
@@ -106,6 +105,48 @@ const EditUserForm = () => {
     } catch (error) {
       console.error('Error updating user:', error);
       setMessage('Error updating user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedUserId) {
+      setMessage('Please select a user to delete');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const response = await fetch(`http://localhost:5555/users/${selectedUserId}`, {
+        method: 'DELETE',
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage('User deleted successfully!');
+        setSelectedUserId('');
+        setFormData({
+          userUsername: '',
+          userFullName: '',
+          userPassword: '',
+          userRole: 'employee'
+        });
+        fetchUsers();
+      } else {
+        setMessage(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setMessage('Error deleting user');
     } finally {
       setLoading(false);
     }
@@ -201,14 +242,26 @@ const EditUserForm = () => {
           </select>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!selectedUserId || loading}
-          className={`${styles.button} ${(!selectedUserId || loading) ? styles.buttonDisabled : ''}`}
-        >
-          {loading ? 'Updating...' : 'Update User'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!selectedUserId || loading}
+            className={`${styles.button} ${(!selectedUserId || loading) ? styles.buttonDisabled : ''}`}
+          >
+            {loading ? 'Updating...' : 'Update User'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={!selectedUserId || loading}
+            className={`${styles.button} ${(!selectedUserId || loading) ? styles.buttonDisabled : ''}`}
+            style={{ backgroundColor: '#dc3545', borderColor: '#dc3545' }}
+          >
+            {loading ? 'Deleting...' : 'Delete User'}
+          </button>
+        </div>
       </div>
     </div>
   );
