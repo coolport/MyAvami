@@ -112,7 +112,7 @@ function TransactHistory() {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Invoice - Transaction #${transaction._id}</title>
+      <title>Transaction Details#${transaction._id}</title>
       <style>
         body { font-family: sans-serif; padding: 20px; background: white; color: #333; }
         h2 { text-align: center; color: #2D3748; margin-bottom: 30px; }
@@ -125,7 +125,7 @@ function TransactHistory() {
       </style>
     </head>
     <body>
-      <h2>Avami Pharmacy - Sales Invoice</h2>
+      <h2>Avami Pharmacy - Sales Details</h2>
       <div class="section">
         <strong>Transaction ID:</strong> ${transaction._id}<br/>
         <strong>Employee:</strong> ${transaction.transactionEmployee}<br/>
@@ -359,7 +359,7 @@ function TransactHistory() {
                     onClick={() => generateInvoice(transaction)}
                     width="100%"
                   >
-                    Print Invoice
+                    Print
                   </Button>
                 </Box>
               </Box>
