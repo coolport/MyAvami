@@ -178,7 +178,7 @@ const Reports = () => {
 
   return (
     <>
-      <PageHeader />
+      <PageHeader title={"Reports"} />
       <div className={styles.reportsContainer}>
         <div className={styles.reportsHeader}>
           <h1>Business Reports Dashboard</h1>

@@ -1,0 +1,245 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 450px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #718096;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.closeButton:hover {
+  background-color: #f7fafc;
+  color: #2d3748;
+}
+
+/* Receipt Content */
+.receiptContent {
+  padding: 24px;
+  font-family: 'Courier New', monospace;
+  background: #fafafa;
+  margin: 0 24px;
+  border-radius: 8px;
+  border: 2px dashed #cbd5e0;
+}
+
+.receiptHeader {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #2d3748;
+}
+
+.storeName {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #1a202c;
+}
+
+.storeInfo {
+  font-size: 12px;
+  color: #4a5568;
+  margin-bottom: 3px;
+}
+
+.transactionInfo {
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  color: #2d3748;
+}
+
+.infoRow span:first-child {
+  font-weight: 600;
+}
+
+.itemsList {
+  border-top: 1px dashed #4a5568;
+  border-bottom: 1px dashed #4a5568;
+  padding: 15px 0;
+  margin-bottom: 20px;
+}
+
+.receiptItem {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.itemName {
+  flex: 1;
+  padding-right: 15px;
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.itemQtyPrice {
+  text-align: right;
+  white-space: nowrap;
+  color: #4a5568;
+}
+
+.totalsSection {
+  margin-bottom: 20px;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #2d3748;
+}
+
+.totalRow span:first-child {
+  font-weight: 500;
+}
+
+.totalRow span:last-child {
+  font-weight: 600;
+}
+
+.receiptFooter {
+  text-align: center;
+  padding-top: 15px;
+  border-top: 1px dashed #4a5568;
+  font-size: 11px;
+  color: #4a5568;
+}
+
+.receiptFooter p {
+  margin: 4px 0;
+}
+
+/* Modal Actions */
+.modalActions {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.primaryButton {
+  flex: 1;
+  background: linear-gradient(135deg, #4299e1, #3182ce);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(66, 153, 225, 0.2);
+}
+
+.primaryButton:hover {
+  background: linear-gradient(135deg, #3182ce, #2c5aa0);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(66, 153, 225, 0.3);
+}
+
+.secondaryButton {
+  flex: 1;
+  background: white;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondaryButton:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+  color: #2d3748;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .modalContent {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .receiptContent {
+    margin: 0 12px;
+    padding: 16px;
+  }
+
+  .modalActions {
+    flex-direction: column;
+  }
+
+  .modalActions button {
+    width: 100%;
+  }
+}

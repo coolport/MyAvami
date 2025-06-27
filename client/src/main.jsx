@@ -17,6 +17,7 @@ import EditUserForm from './EditUserForm'
 import Maintenance from './Maintenance'
 import Registration from './Registration';
 import Unauthorized from './Unauthorized'
+import RegisterSupplier from './RegisterSupplier'
 
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -51,6 +52,16 @@ createRoot(document.getElementById('root')).render(
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/registersupplier"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <RegisterSupplier />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/home"
             element={

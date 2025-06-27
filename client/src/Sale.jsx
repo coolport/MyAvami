@@ -4,6 +4,7 @@ import { FiSearch, FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiCreditCard, FiUs
 import PageHeader from "./components/PageHeader";
 import { postNotifications } from "./services/notificationService"; // Adjust path as needed
 import styles from "./styles/Sale.module.css";
+import Receipt from './components/Receipt'; // Add this import
 
 // newest
 const fetchUser = async () => {
@@ -35,6 +36,8 @@ const Sale = () => {
   const [toast, setToast] = useState(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [lastTransaction, setLastTransaction] = useState(null);
 
   const checkoutForm = useForm();
 
@@ -73,6 +76,10 @@ const Sale = () => {
     }
   }
 
+  const handleReceiptPrint = () => {
+    // Optional: Add any additional logic after printing
+    console.log("Receipt printed");
+  };
   async function fetchProducts() {
     setLoading(true);
     try {
@@ -327,7 +334,8 @@ const Sale = () => {
       transactCart: cart.map(item => ({
         transactionCartItemName: item.itemName,
         transactionCartItemID: item._id,
-        transactionCartItemCount: item.quantity
+        transactionCartItemCount: item.quantity,
+        transactionCartItemPrice: item.itemPrice // Add this line
       })),
       transactionSubtotal: subtotal,
       transactionVAT: vat,
@@ -380,7 +388,19 @@ const Sale = () => {
           }
         }
 
+        // Prepare transaction data for receipt
+        const receiptData = {
+          ...transactionData,
+          transactionId: transactionResult.data?._id || 'N/A',
+          transactionDate: new Date().toISOString()
+        };
+
+        // Store transaction data and show receipt
+        setLastTransaction(receiptData);
         setShowCheckout(false);
+        setShowReceipt(true);
+
+        // Clear cart and form
         setCart([]);
         checkoutForm.reset();
         showToast("Transaction completed successfully!");
@@ -391,6 +411,12 @@ const Sale = () => {
       console.error("Transaction error:", error.message);
       showToast("Failed to process transaction", "error");
     }
+  };
+
+  const handleReceiptClose = () => {
+    setShowReceipt(false);
+    setLastTransaction(null);
+    console.log("Receipt printed");
   };
 
   const formatPrice = (price) => {
@@ -713,10 +739,11 @@ const Sale = () => {
               <div className={styles.checkboxContainer}>
                 <input
                   type="checkbox"
+                  id="seniorPwdDiscount"
                   {...checkoutForm.register("transactionSeniorPwdDiscount")}
                   className={styles.checkbox}
                 />
-                <label className={styles.label}>
+                <label htmlFor="seniorPwdDiscount" className={styles.label}>
                   Senior Citizen / PWD Discount (20% discount, VAT exempt)
                 </label>
               </div>
@@ -800,6 +827,15 @@ const Sale = () => {
             </form>
           </div>
         </div>
+
+      )}
+      {/* Receipt Modal */}
+      {showReceipt && lastTransaction && (
+        <Receipt
+          transactionData={lastTransaction}
+          onClose={handleReceiptClose}
+          onPrint={handleReceiptPrint}
+        />
       )}
     </>
   );
