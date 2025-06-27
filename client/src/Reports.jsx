@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
 import styles from "./styles/Reports.module.css";
 import PageHeader from './components/PageHeader';
+import { exportToPDF } from './services/pdfExportTemplates';
 
 const Reports = () => {
   const [products, setProducts] = useState([]);
@@ -146,6 +147,25 @@ const Reports = () => {
     };
   };
 
+  // Export Functions
+  const handleExport = async () => {
+    try {
+      if (activeTab === 'sales') {
+        const salesData = getSalesAnalytics();
+        await exportToPDF('sales', salesData, { transactions });
+      } else if (activeTab === 'inventory') {
+        const inventoryData = getInventoryAnalytics();
+        await exportToPDF('inventory', inventoryData, { products });
+      } else if (activeTab === 'employee') {
+        const employeeData = getEmployeeAnalytics();
+        await exportToPDF('employee', employeeData, { notifications, users });
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Error exporting report. Please try again.');
+    }
+  };
+
   if (loading) {
     return <div className={styles.loading}>Loading reports...</div>;
   }
@@ -162,24 +182,29 @@ const Reports = () => {
       <div className={styles.reportsContainer}>
         <div className={styles.reportsHeader}>
           <h1>Business Reports Dashboard</h1>
-          <div className={styles.tabNavigation}>
-            <button
-              className={activeTab === 'sales' ? `${styles.tab} ${styles.active}` : styles.tab}
-              onClick={() => setActiveTab('sales')}
-            >
-              Sales Reports
-            </button>
-            <button
-              className={activeTab === 'inventory' ? `${styles.tab} ${styles.active}` : styles.tab}
-              onClick={() => setActiveTab('inventory')}
-            >
-              Inventory Reports
-            </button>
-            <button
-              className={activeTab === 'employee' ? `${styles.tab} ${styles.active}` : styles.tab}
-              onClick={() => setActiveTab('employee')}
-            >
-              Employee Reports
+          <div className={styles.headerControls}>
+            <div className={styles.tabNavigation}>
+              <button
+                className={activeTab === 'sales' ? `${styles.tab} ${styles.active}` : styles.tab}
+                onClick={() => setActiveTab('sales')}
+              >
+                Sales Reports
+              </button>
+              <button
+                className={activeTab === 'inventory' ? `${styles.tab} ${styles.active}` : styles.tab}
+                onClick={() => setActiveTab('inventory')}
+              >
+                Inventory Reports
+              </button>
+              <button
+                className={activeTab === 'employee' ? `${styles.tab} ${styles.active}` : styles.tab}
+                onClick={() => setActiveTab('employee')}
+              >
+                Employee Reports
+              </button>
+            </div>
+            <button className={styles.exportButton} onClick={handleExport}>
+              Export PDF Report
             </button>
           </div>
         </div>
@@ -205,7 +230,7 @@ const Reports = () => {
               </div>
             </div>
 
-            <div className={styles.chartContainer}>
+            <div className={styles.chartContainer} id="sales-chart">
               <h3>Daily Sales (Last 7 Days)</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={salesData.dailySales}>
@@ -244,7 +269,7 @@ const Reports = () => {
             </div>
 
             <div className={styles.chartsRow}>
-              <div className={`${styles.chartContainer} ${styles.half}`}>
+              <div className={`${styles.chartContainer} ${styles.half}`} id="inventory-chart">
                 <h3>Inventory by Category</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
@@ -332,7 +357,7 @@ const Reports = () => {
               </div>
             </div>
 
-            <div className={styles.chartContainer}>
+            <div className={styles.chartContainer} id="employee-chart">
               <h3>Employee Sales Performance</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={employeeData.employeePerformance.slice(0, 10)}>
