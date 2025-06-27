@@ -11,7 +11,7 @@ const addPDFHeader = (doc, title) => {
   // Company/System name
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('Business Management System', pageWidth / 2, 20, { align: 'center' });
+  doc.text('Avami Pharmacy', pageWidth / 2, 20, { align: 'center' });
 
   // Report title
   doc.setFontSize(16);
