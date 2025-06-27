@@ -95,3 +95,25 @@ export const putUser = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+export const deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  // Validate the ID format
+  if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).json({ success: false, message: "Invalid user ID format" });
+  }
+
+  try {
+    const deletedUser = await User.findByIdAndDelete(id);
+
+    if (!deletedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    console.log('Deleted user:', deletedUser);
+    res.status(200).json({ success: true, message: "User deleted successfully", data: deletedUser });
+  } catch (error) {
+    console.error("Error deleting user:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
