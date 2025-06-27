@@ -16,6 +16,11 @@ function Inventory() {
   const [toast, setToast] = useState(null)
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
 
+  // New states for file upload in edit modal
+  const [editImagePreview, setEditImagePreview] = useState(null)
+  const [uploadingEditImage, setUploadingEditImage] = useState(false)
+  const [editUploadError, setEditUploadError] = useState(null)
+
   const editForm = useForm()
 
   useEffect(() => {
@@ -224,8 +229,71 @@ function Inventory() {
     return `http://localhost:5555/${imageUrl}`
   }
 
+  // NEW: Handle file upload for edit modal
+  const handleEditFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setEditUploadError('Please select a valid image file (jpg, jpeg, png, gif, webp)');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setEditUploadError('File size must be less than 5MB');
+      return;
+    }
+
+    setUploadingEditImage(true);
+    setEditUploadError(null);
+
+    // Create preview immediately
+    const previewUrl = URL.createObjectURL(file);
+    setEditImagePreview(previewUrl);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('http://localhost:5555/upload/image', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        // Set the uploaded image URL in the form
+        editForm.setValue('itemImage', result.data.url);
+        setEditImagePreview(`http://localhost:5555${result.data.url}`);
+        console.log('Image uploaded successfully:', result.data);
+      } else {
+        setEditUploadError(result.message || 'Failed to upload image');
+        setEditImagePreview(null);
+        editForm.setValue('itemImage', editingItem.itemImage); // Reset to original
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setEditUploadError('Network error during upload');
+      setEditImagePreview(null);
+      editForm.setValue('itemImage', editingItem.itemImage); // Reset to original
+    } finally {
+      setUploadingEditImage(false);
+      // Clean up preview URL
+      URL.revokeObjectURL(previewUrl);
+    }
+  };
+
   function handleEdit(item) {
     setEditingItem(item)
+    // Reset upload states
+    setEditImagePreview(getImageUrl(item.itemImage))
+    setUploadingEditImage(false)
+    setEditUploadError(null)
+
     editForm.reset({
       itemName: item.itemName,
       itemBrandName: item.itemBrandName || '',
@@ -253,6 +321,10 @@ function Inventory() {
 
       if (response.ok) {
         setEditingItem(null)
+        // Reset edit states
+        setEditImagePreview(null)
+        setUploadingEditImage(false)
+        setEditUploadError(null)
         getItems()
         showToast("Inventory item updated successfully")
       } else {
@@ -540,7 +612,12 @@ function Inventory() {
                   Edit Product
                 </h2>
                 <button
-                  onClick={() => setEditingItem(null)}
+                  onClick={() => {
+                    setEditingItem(null)
+                    setEditImagePreview(null)
+                    setUploadingEditImage(false)
+                    setEditUploadError(null)
+                  }}
                   className={styles.closeButton}
                 >
                   <FiX />
@@ -652,31 +729,81 @@ function Inventory() {
                   />
                 </div>
 
+                {/* NEW: File picker for image instead of URL input */}
                 <div className={styles.formGroup}>
                   <label className={styles.label}>
-                    Image URL *
+                    Product Image *
                   </label>
                   <input
-                    {...editForm.register("itemImage", { required: true })}
-                    type="url"
-                    placeholder="https://example.com/image.jpg"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleEditFileUpload}
+                    disabled={uploadingEditImage}
                     className={styles.input}
+                    style={{
+                      padding: "8px",
+                      backgroundColor: uploadingEditImage ? "#f7fafc" : "white"
+                    }}
                   />
+                  {uploadingEditImage && (
+                    <p style={{ fontSize: "14px", color: "#3182ce", marginTop: "4px" }}>
+                      Uploading image...
+                    </p>
+                  )}
+                  {editUploadError && (
+                    <p style={{ fontSize: "14px", color: "#e53e3e", marginTop: "4px" }}>
+                      {editUploadError}
+                    </p>
+                  )}
+                  <p style={{ fontSize: "12px", color: "#718096", marginTop: "4px" }}>
+                    Select an image file (max 5MB, jpg/png/gif/webp)
+                  </p>
                 </div>
+
+                {/* Hidden input to store the uploaded image URL */}
+                <input
+                  type="hidden"
+                  {...editForm.register("itemImage", { required: true })}
+                />
+
+                {/* Image Preview */}
+                {editImagePreview && (
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Current Image:</label>
+                    <img
+                      src={editImagePreview}
+                      alt="Product preview"
+                      style={{
+                        maxWidth: "200px",
+                        maxHeight: "200px",
+                        objectFit: "cover",
+                        border: "1px solid #cbd5e0",
+                        borderRadius: "4px"
+                      }}
+                      onError={() => setEditImagePreview(null)}
+                    />
+                  </div>
+                )}
 
                 <div className={styles.modalActions}>
                   <button
                     type="button"
-                    onClick={() => setEditingItem(null)}
+                    onClick={() => {
+                      setEditingItem(null)
+                      setEditImagePreview(null)
+                      setUploadingEditImage(false)
+                      setEditUploadError(null)
+                    }}
                     className={`${styles.modalButton} ${styles.secondary}`}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
+                    disabled={uploadingEditImage}
                     className={`${styles.modalButton} ${styles.primary}`}
                   >
-                    Save Changes
+                    {uploadingEditImage ? "Uploading..." : "Save Changes"}
                   </button>
                 </div>
               </form>

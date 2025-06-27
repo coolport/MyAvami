@@ -5,7 +5,7 @@ import logo from "./assets/logo.png";
 import PageHeader from "./components/PageHeader";
 import { postNotifications } from "./services/notificationService";
 
-function Register() {
+function RegisterUserForm() {
   const { register, handleSubmit, reset } = useForm();
 
   async function onSubmit(data) {
@@ -81,7 +81,7 @@ function Register() {
 
   return (
     <>
-      <PageHeader />
+      {/* <PageHeader /> */}
       <Center>
         <Box width={"50%"} marginTop={50} color={"black"}>
           <div className={styles.container}>
@@ -143,4 +143,4 @@ function Register() {
   );
 }
 
-export default Register;
+export default RegisterUserForm;

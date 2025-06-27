@@ -5,10 +5,8 @@ import Layout from './Layout'
 import Home from './Home'
 import HomepageEmployee from './HomeEmployee'
 import Inventory from './Inventory'
-import Entry from './Entry'
 import Transact from './components/legacy/Transact'
 import Login from './Login'
-import Register from './Register'
 import TransactHistory from './TransactHistory'
 import Notifications from './Notifications'
 import Help from './Help'
@@ -17,7 +15,10 @@ import EditUserForm from './EditUserForm'
 import Maintenance from './Maintenance'
 import Registration from './Registration';
 import Unauthorized from './Unauthorized'
-import RegisterSupplier from './RegisterSupplier'
+
+import RegisterSupplierForm from './RegisterSupplierForm'
+import RegisterProductForm from './RegisterProductForm'
+import RegisterUserForm from './RegisterUserForm'
 
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -57,7 +58,7 @@ createRoot(document.getElementById('root')).render(
             path="/registersupplier"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <RegisterSupplier />
+                <RegisterSupplierForm />
               </ProtectedRoute>
             }
           />
@@ -90,7 +91,7 @@ createRoot(document.getElementById('root')).render(
             path="/entry"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <Entry />
+                <RegisterProductForm />
               </ProtectedRoute>
             }
           />
@@ -98,7 +99,7 @@ createRoot(document.getElementById('root')).render(
             path="/register"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <Register />
+                <RegisterUserForm />
               </ProtectedRoute>
             }
           />

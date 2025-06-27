@@ -6,7 +6,7 @@ import logo from "./assets/logo.png";
 import PageHeader from "./components/PageHeader";
 import { postNotifications } from "./services/notificationService";
 
-function Entry() {
+function RegisterProductForm() {
   const { register, handleSubmit, reset, setValue, watch } = useForm();
   const [suppliers, setSuppliers] = useState([]);
   const [loadingSuppliers, setLoadingSuppliers] = useState(true);
@@ -196,7 +196,7 @@ function Entry() {
 
   return (
     <>
-      <PageHeader />
+      {/* <PageHeader /> */}
       <Center>
         <Box width={"50%"} marginTop={50} color={"black"}>
           <div className={styles.container}>
@@ -380,4 +380,4 @@ function Entry() {
   );
 }
 
-export default Entry;
+export default RegisterProductForm;

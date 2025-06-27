@@ -5,7 +5,7 @@ import logo from "./assets/logo.png";
 import PageHeader from "./components/PageHeader";
 import { postNotifications } from "./services/notificationService";
 
-function RegisterSupplier() {
+function RegisterSupplierForm() {
   const { register, handleSubmit, reset } = useForm();
 
   async function onSubmit(data) {
@@ -81,7 +81,7 @@ function RegisterSupplier() {
 
   return (
     <>
-      <PageHeader />
+      {/* <PageHeader /> */}
       <Center>
         <Box width={"50%"} marginTop={50} color={"black"}>
           <div className={styles.container}>
@@ -159,4 +159,4 @@ function RegisterSupplier() {
   );
 }
 
-export default RegisterSupplier;
+export default RegisterSupplierForm;
