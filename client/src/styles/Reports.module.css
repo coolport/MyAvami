@@ -3,7 +3,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  background-color: #f9fafb;
+  background-color: #f7f7f7;
   min-height: 100vh;
 }
 
@@ -340,4 +340,69 @@
 .chartContainer .recharts-legend-item-text {
   color: #6b7280 !important;
   font-size: 0.875rem !important;
+}
+
+.headerControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 1rem;
+}
+
+.exportButton {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+  white-space: nowrap;
+}
+
+.exportButton:hover {
+  background-color: #45a049;
+}
+
+.exportButton:active {
+  background-color: #3d8b40;
+  transform: translateY(1px);
+}
+
+/* Ensure tab navigation still works well with the new layout */
+.tabNavigation {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Make sure the reports header is flexible */
+.reportsHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.reportsHeader h1 {
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .headerControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .exportButton {
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .tabNavigation {
+    justify-content: center;
+  }
 }
