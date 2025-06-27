@@ -7,7 +7,7 @@ import {
   FiBell,
 } from 'react-icons/fi';
 import DashboardHeader from './components/DashboardHeader';
-import styles from './styles/Home.module.css';
+import styles from './styles/EmployeeHome.module.css';
 
 const features = [
   { label: 'Transact', icon: FiShoppingCart, path: '/sales' },

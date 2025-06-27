@@ -161,8 +161,36 @@ const Home = () => {
   return (
     <>
       <DashboardHeader />
+
       <div className={styles.container}>
+
+        <div className={styles.actionsSection}>
+          <h2 className={styles.sectionTitle}>Quick Actions</h2>
+          <div className={styles.actionsGrid}>
+            {features.map((feature) => {
+              const IconComponent = feature.icon;
+              const hasAlert = feature.label === 'Notifications' && metrics.unreadNotifications > 0;
+              const hasInventoryAlert = feature.label === 'Inventory' && metrics.criticalAlerts > 0;
+
+              return (
+                <RouterLink
+                  key={feature.label}
+                  to={feature.path}
+                  className={`${styles.actionCard} ${(hasAlert || hasInventoryAlert) ? styles.hasAlert : ''}`}
+                >
+                  <div className={styles.actionIcon}>
+                    <IconComponent />
+                    {hasAlert && <span className={styles.notificationBadge}>{metrics.unreadNotifications}</span>}
+                    {hasInventoryAlert && <span className={styles.alertBadge}>{metrics.criticalAlerts}</span>}
+                  </div>
+                  <span className={styles.actionLabel}>{feature.label}</span>
+                </RouterLink>
+              );
+            })}
+          </div>
+        </div>
         {/* Key Metrics Overview */}
+
         <div className={styles.metricsSection}>
           <h2 className={styles.sectionTitle}>Today's Overview</h2>
           <div className={styles.metricsGrid}>
@@ -223,31 +251,6 @@ const Home = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className={styles.actionsSection}>
-          <h2 className={styles.sectionTitle}>Quick Actions</h2>
-          <div className={styles.actionsGrid}>
-            {features.map((feature) => {
-              const IconComponent = feature.icon;
-              const hasAlert = feature.label === 'Notifications' && metrics.unreadNotifications > 0;
-              const hasInventoryAlert = feature.label === 'Inventory' && metrics.criticalAlerts > 0;
-
-              return (
-                <RouterLink
-                  key={feature.label}
-                  to={feature.path}
-                  className={`${styles.actionCard} ${(hasAlert || hasInventoryAlert) ? styles.hasAlert : ''}`}
-                >
-                  <div className={styles.actionIcon}>
-                    <IconComponent />
-                    {hasAlert && <span className={styles.notificationBadge}>{metrics.unreadNotifications}</span>}
-                    {hasInventoryAlert && <span className={styles.alertBadge}>{metrics.criticalAlerts}</span>}
-                  </div>
-                  <span className={styles.actionLabel}>{feature.label}</span>
-                </RouterLink>
-              );
-            })}
-          </div>
-        </div>
 
         {/* Recent Activity & Insights */}
         <div className={styles.insightsSection}>
