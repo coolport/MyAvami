@@ -40,10 +40,21 @@ createRoot(document.getElementById('root')).render(
           <Route path="notifications" element={<Notifications />} />
           <Route path="homeemployee" element={<HomepageEmployee />} />
           <Route path="help" element={<Help />} />
+          <Route path="register" element={<RegisterUserForm />} />
 
 
 
           <Route path="unauthorized" element={<Unauthorized />} />
+
+
+          {/* <Route */}
+          {/*   path="/register" */}
+          {/*   element={ */}
+          {/*     <ProtectedRoute allowedRoles={['admin']}> */}
+          {/*       <RegisterUserForm /> */}
+          {/*     </ProtectedRoute> */}
+          {/*   } */}
+          {/* /> */}
 
           <Route
             path="/login"
@@ -92,14 +103,6 @@ createRoot(document.getElementById('root')).render(
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <RegisterProductForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <RegisterUserForm />
               </ProtectedRoute>
             }
           />
