@@ -230,9 +230,9 @@ const Receipt = ({
         <div className={styles.receiptContent}>
           <div className={styles.receiptHeader}>
             <div className={styles.storeName}>MyAvami</div>
-            <div className={styles.storeInfo}>Tindalog Anonas</div>
+            <div className={styles.storeInfo}>08 Molave, Project 3</div>
             <div className={styles.storeInfo}>Quezon City, NCR</div>
-            <div className={styles.storeInfo}>Tel: (02) 123-4567</div>
+            <div className={styles.storeInfo}>Contact: 0906 545 5025</div>
           </div>
 
           <div className={styles.transactionInfo}>
