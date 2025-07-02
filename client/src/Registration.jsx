@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { FiUser, FiBox, FiTruck } from "react-icons/fi";
 import PageHeader from "./components/PageHeader";
-import styles from "./styles/Registration.module.css";
+// import styles from "./styles/Registration.module.css";
+import styles from "./styles/Maintenance.module.css";
 // You'll need to create these form components
 import RegisterUserForm from "./RegisterUserForm";
 import RegisterProductForm from "./RegisterProductForm";

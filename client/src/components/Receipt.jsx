@@ -136,7 +136,7 @@ const Receipt = ({
       <body>
         <div class="receipt">
           <div class="header">
-            <div class="store-name">YOUR STORE NAME</div>
+            <div class="store-name">MyAvami</div>
             <div class="store-info">123 Store Address</div>
             <div class="store-info">City, Province 1234</div>
             <div class="store-info">Tel: (02) 123-4567</div>
@@ -213,7 +213,7 @@ const Receipt = ({
     // Call the onPrint callback if provided
     if (onPrint) onPrint();
   };
-
+  const expectedDiscount = transactionSeniorPwdDiscount ? transactionSubtotal * 0.20 : 0;
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
@@ -229,9 +229,9 @@ const Receipt = ({
 
         <div className={styles.receiptContent}>
           <div className={styles.receiptHeader}>
-            <div className={styles.storeName}>YOUR STORE NAME</div>
-            <div className={styles.storeInfo}>123 Store Address</div>
-            <div className={styles.storeInfo}>City, Province 1234</div>
+            <div className={styles.storeName}>MyAvami</div>
+            <div className={styles.storeInfo}>Tindalog Anonas</div>
+            <div className={styles.storeInfo}>Quezon City, NCR</div>
             <div className={styles.storeInfo}>Tel: (02) 123-4567</div>
           </div>
 
@@ -276,7 +276,7 @@ const Receipt = ({
             {transactionDiscount > 0 && (
               <div className={styles.totalRow} style={{ color: '#38a169' }}>
                 <span>Senior/PWD Discount (20%):</span>
-                <span>-{formatPrice(transactionDiscount)}</span>
+                <span>-{formatPrice(expectedDiscount)}</span>
               </div>
             )}
 

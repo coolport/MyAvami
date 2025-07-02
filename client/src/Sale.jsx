@@ -733,7 +733,6 @@ const Sale = () => {
                   className={styles.select}
                 >
                   <option value="cash">Cash</option>
-                  <option value="card">Credit/Debit Card</option>
                   <option value="gcash">GCash</option>
                   <option value="paymaya">PayMaya</option>
                 </select>

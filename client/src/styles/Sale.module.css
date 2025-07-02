@@ -362,6 +362,10 @@
   gap: 8px;
 }
 
+.checkboxText {
+  color: black;
+}
+
 .orderSummary {
   background-color: #f7fafc;
   padding: 16px;
