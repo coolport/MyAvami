@@ -185,6 +185,7 @@ const Home = () => {
                           <div className={styles.productName}>{product.itemName || 'Unknown Product'}</div>
                           <div className={styles.productDetails}>
                             SKU: {product.itemSku || 'N/A'} | Price: ₱{(product.itemPrice || 0).toLocaleString()}
+                            Price: ₱{(product.itemPrice || 0).toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -212,6 +213,7 @@ const Home = () => {
                           <div className={styles.productName}>{product.itemName || 'Unknown Product'}</div>
                           <div className={styles.productDetails}>
                             SKU: {product.itemSku || 'N/A'} | Price: ₱{(product.itemPrice || 0).toLocaleString()}
+                            Price: ₱{(product.itemPrice || 0).toLocaleString()}
                           </div>
                         </div>
                       </div>
