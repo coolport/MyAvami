@@ -9,6 +9,7 @@ function Inventory() {
   const [inventory, setInventory] = useState([])
   const [filteredInventory, setFilteredInventory] = useState([])
   const [suppliers, setSuppliers] = useState([])
+  const [transactions, setTransactions] = useState([])
   const [editingItem, setEditingItem] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -24,17 +25,32 @@ function Inventory() {
   const editForm = useForm()
 
   useEffect(() => {
-    fetchSuppliers().then(() => {
-      getItems()
-    })
+    console.log('Starting data fetch sequence...')
+
+    fetchSuppliers()
+      .then(() => {
+        console.log('Suppliers loaded, fetching transactions...')
+        return fetchTransactions()
+      })
+      .then(() => {
+        console.log('Transactions loaded, fetching items...')
+        return getItems()
+      })
+      .then(() => {
+        console.log('All data loaded successfully')
+      })
+      .catch(error => {
+        console.error('Error in data loading sequence:', error)
+      })
   }, [])
 
+  // Filter inventory based on search term
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredInventory(inventory)
-    } else {
+    if (searchTerm) {
       const filtered = linearSearch(inventory, searchTerm)
       setFilteredInventory(filtered)
+    } else {
+      setFilteredInventory(inventory)
     }
   }, [inventory, searchTerm])
 
@@ -122,6 +138,8 @@ function Inventory() {
         return item.itemExpiration ? new Date(item.itemExpiration).getTime() : 0
       case 'supplierName':
         return (item.supplierName || '').toLowerCase()
+      case 'movement':
+        return item.movement === 'Fast Moving' ? 1 : 0
       default:
         return item[key] || ''
     }
@@ -142,6 +160,70 @@ function Inventory() {
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 3000)
+  }
+
+  // Fetch transactions for movement calculation
+  async function fetchTransactions() {
+    try {
+      const response = await fetch("http://localhost:5555/transactions", {
+        method: "GET",
+        credentials: "include",
+      })
+      if (!response.ok) {
+        throw new Error(`Response status: ${response.status}`)
+      }
+      const json = await response.json()
+      if (json.data) {
+        setTransactions(json.data)
+      }
+    } catch (e) {
+      console.error("Failed to fetch transactions:", e)
+    }
+  }
+
+  // Calculate item movement based on sales in past 24 hours
+  function calculateItemMovement(itemName) {
+    const now = new Date()
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+
+    console.log(`Calculating movement for: ${itemName}`)
+    console.log(`Time range: ${oneDayAgo.toISOString()} to ${now.toISOString()}`)
+    console.log(`Total transactions available: ${transactions.length}`)
+
+    let totalSales = 0
+
+    // Filter transactions from the past 24 hours
+    const recentTransactions = transactions.filter(transaction => {
+      const transactionDate = new Date(transaction.transactionDate)
+      const isInRange = transactionDate >= oneDayAgo && transactionDate <= now
+
+      if (isInRange) {
+        console.log(`Recent transaction found: ${transaction._id} at ${transactionDate.toISOString()}`)
+      }
+
+      return isInRange
+    })
+
+    console.log(`Recent transactions found: ${recentTransactions.length}`)
+
+    // Count sales for this specific item
+    recentTransactions.forEach(transaction => {
+      if (transaction.transactCart && Array.isArray(transaction.transactCart)) {
+        transaction.transactCart.forEach(cartItem => {
+          if (cartItem.transactionCartItemName === itemName) {
+            const itemCount = parseInt(cartItem.transactionCartItemCount) || 0
+            totalSales += itemCount
+            console.log(`Found sale: ${itemName} x${itemCount} in transaction ${transaction._id}`)
+          }
+        })
+      }
+    })
+
+    console.log(`Total sales for ${itemName}: ${totalSales}`)
+    const movement = totalSales >= 5 ? 'Fast Moving' : 'Slow Moving'
+    console.log(`Movement status: ${movement}`)
+
+    return movement
   }
 
   async function fetchSuppliers() {
@@ -177,6 +259,10 @@ function Inventory() {
       const data = json.data
       const updatedArray = []
 
+      console.log('Processing inventory items...')
+      console.log(`Available transactions: ${transactions.length}`)
+      console.log(`Available suppliers: ${suppliers.length}`)
+
       for (const x in data) {
         const item = data[x]
 
@@ -185,23 +271,27 @@ function Inventory() {
         let actualSupplierId = item.supplierId
 
         if (typeof item.supplierId === 'object' && item.supplierId !== null) {
-          // Supplier is populated (object)
           supplierName = item.supplierId.supplierName || 'Unknown Supplier'
           actualSupplierId = item.supplierId._id
         } else if (typeof item.supplierId === 'string') {
-          // Supplier is not populated (just ID)
           const supplier = suppliers.find(s => s._id === item.supplierId)
           supplierName = supplier ? supplier.supplierName : 'Unknown Supplier'
           actualSupplierId = item.supplierId
         }
 
+        // Calculate movement for this item
+        const movement = calculateItemMovement(item.itemName)
+
         const itemWithSupplier = {
           ...item,
           supplierName: supplierName,
-          supplierId: actualSupplierId // Keep the actual ID for editing
+          supplierId: actualSupplierId,
+          movement: movement
         }
         updatedArray.push(itemWithSupplier)
       }
+
+      console.log('Inventory processing complete')
       setInventory(updatedArray)
     } catch (e) {
       console.error(e)
@@ -229,7 +319,7 @@ function Inventory() {
     return `http://localhost:5555/${imageUrl}`
   }
 
-  // NEW: Handle file upload for edit modal
+  // Handle file upload for edit modal
   const handleEditFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -361,7 +451,7 @@ function Inventory() {
     }
   }
 
-  // NEW: Handle reorder functionality
+  // Handle reorder functionality
   function handleReorder(item) {
     // Find the supplier data for this item
     const supplier = suppliers.find(s => s._id === item.supplierId)
@@ -393,7 +483,7 @@ function Inventory() {
     return { label: 'In Stock', colorScheme: 'green' }
   }
 
-  // NEW: Check if item needs reordering (out of stock or low stock)
+  // Check if item needs reordering (out of stock or low stock)
   function needsReorder(count) {
     return count <= 10 // Out of stock (0) or low stock (<=10)
   }
@@ -475,6 +565,12 @@ function Inventory() {
                 </th>
                 <th
                   className={`${styles.tableHeaderCell} ${styles.sortable}`}
+                  onClick={() => handleSort('movement')}
+                >
+                  Movement {renderSortIcon('movement')}
+                </th>
+                <th
+                  className={`${styles.tableHeaderCell} ${styles.sortable}`}
                   onClick={() => handleSort('itemExpiration')}
                 >
                   Expiration {renderSortIcon('itemExpiration')}
@@ -485,7 +581,7 @@ function Inventory() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className={styles.loadingCell}>
+                  <td colSpan={8} className={styles.loadingCell}>
                     <div className={styles.loadingContainer}>
                       <div className={styles.spinner}></div>
                       <span>Loading inventory...</span>
@@ -494,7 +590,7 @@ function Inventory() {
                 </tr>
               ) : filteredInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className={styles.emptyCell}>
+                  <td colSpan={8} className={styles.emptyCell}>
                     <p className={styles.emptyText}>
                       {searchTerm
                         ? "No items match your search"
@@ -562,6 +658,11 @@ function Inventory() {
                         </div>
                       </td>
                       <td className={styles.tableCell}>
+                        <span className={`${styles.badge} ${styles.movement} ${item.movement === 'Fast Moving' ? styles.fastMoving : styles.slowMoving}`}>
+                          {item.movement}
+                        </span>
+                      </td>
+                      <td className={styles.tableCell}>
                         <p className={styles.dateText}>
                           {formatDate(item.itemExpiration)}
                         </p>
@@ -582,7 +683,7 @@ function Inventory() {
                             <FiTrash2 />
                             Delete
                           </button>
-                          {/* NEW: Reorder button - only show for items that need reordering */}
+                          {/* Reorder button - only show for items that need reordering */}
                           {needsReorder(item.itemCount) && (
                             <button
                               className={`${styles.button} ${styles.reorder}`}
@@ -810,6 +911,7 @@ function Inventory() {
             </div>
           </div>
         )}
+
 
         {/* Delete Confirmation Modal */}
         {deleteConfirm && (

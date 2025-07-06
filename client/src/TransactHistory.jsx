@@ -125,7 +125,7 @@ function TransactHistory() {
       </style>
     </head>
     <body>
-      <h2>Avami Pharmacy - Sales Details</h2>
+      <h2>Avami Pharmacy - Invoice Details</h2>
       <div class="section">
         <strong>Transaction ID:</strong> ${transaction._id}<br/>
         <strong>Employee:</strong> ${transaction.transactionEmployee}<br/>
