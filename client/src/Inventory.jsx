@@ -507,8 +507,8 @@ function Inventory() {
   }
 
   // Check if item needs reordering (out of stock or low stock)
-  function needsReorder(count) {
-    return count <= 10 // Out of stock (0) or low stock (<=10)
+  function needsReorder(count, movement) {
+    return count <= 10 || movement === 'Fast Moving'
   }
 
   function renderSortIcon(columnKey) {
@@ -719,12 +719,18 @@ function Inventory() {
                             <FiTrash2 />
                             Delete
                           </button>
-                          {/* Reorder button - only show for items that need reordering */}
-                          {needsReorder(item.itemCount) && (
+                          {/* Reorder button - only show for items that need reordering, AND THATS HNIGH MOVEMENT */}
+                          {needsReorder(item.itemCount, item.movement) && (
                             <button
                               className={`${styles.button} ${styles.reorder}`}
                               onClick={() => handleReorder(item)}
-                              title={item.itemCount === 0 ? "Item is out of stock - Generate urgent reorder form" : "Item is low in stock - Generate reorder form"}
+                              title={
+                                item.itemCount === 0
+                                  ? "Item is out of stock - Generate urgent reorder form"
+                                  : item.itemCount <= 10
+                                    ? "Item is low in stock - Generate reorder form"
+                                    : "Fast moving item - Generate proactive reorder form"
+                              }
                             >
                               <FiRefreshCw />
                               Reorder
