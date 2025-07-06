@@ -19,7 +19,9 @@ export const postSupplier = async (req, res) => {
         s.supplierName &&
         s.supplierEmail &&
         s.supplierAddress &&
-        s.supplierNumber
+        s.supplierNumber &&
+        s.supplierContactPersonName &&
+        s.supplierContactPersonNumber
     );
     if (!isValid) {
       return res
@@ -43,7 +45,9 @@ export const postSupplier = async (req, res) => {
       !supplier.supplierName ||
       !supplier.supplierEmail ||
       !supplier.supplierAddress ||
-      !supplier.supplierNumber
+      !supplier.supplierNumber ||
+      !supplier.supplierContactPersonName ||
+      !supplier.supplierContactPersonNumber
     ) {
       return res
         .status(400)

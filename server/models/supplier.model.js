@@ -23,6 +23,17 @@ const supplierSchema = new mongoose.Schema(
       maxLength: 12,
       match: [/^\d+$/, 'Phone number must contain only digits']
     },
+    supplierContactPersonName: {
+      type: String,
+      unique: true,
+      required: true,
+    },
+    supplierContactPersonNumber: {
+      type: String,
+      required: true,
+      maxLength: 12,
+      match: [/^\d+$/, 'Contact Person Phone number must contain only digits']
+    },
   }, {
   timestamps: true
 });

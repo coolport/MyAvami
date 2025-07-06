@@ -47,7 +47,6 @@ export const postUser = async (req, res) => {
     console.log('REQPARAMS: ', req.params);
     res.status(201).json({ success: true, data: newUser });
 
-
   } catch (error) {
     console.error("Error in Create user: ", error.message);
     res.status(500).json({ success: false, message: "Server Error" });
