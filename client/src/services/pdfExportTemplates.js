@@ -66,6 +66,25 @@ export const generateSalesPDF = async (salesData, transactions) => {
   const doc = new jsPDF();
   let yPos = addPDFHeader(doc, 'SALES REPORT');
 
+  // Add date range info if available
+  if (salesData.dateRange) {
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Report Period: ${salesData.dateRange.start} to ${salesData.dateRange.end}`, 20, yPos);
+    yPos += 10;
+  }
+
+  // Calculate additional metrics from available data
+  const daysDiff = salesData.dateRange ?
+    Math.ceil((new Date(salesData.dateRange.end) - new Date(salesData.dateRange.start)) / (1000 * 60 * 60 * 24)) + 1 :
+    1;
+  const dailyAverage = salesData.totalSales / Math.max(1, daysDiff);
+
+  // Get recent sales (last 7 days from dailySales data)
+  const recentSales = salesData.dailySales ?
+    salesData.dailySales.slice(-7).reduce((sum, day) => sum + (day.sales || 0), 0) :
+    salesData.totalSales;
+
   // Summary Statistics Table
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
@@ -74,8 +93,8 @@ export const generateSalesPDF = async (salesData, transactions) => {
 
   const summaryData = [
     ['Total Sales', `₱${salesData.totalSales.toLocaleString()}`],
-    ['Last 7 Days Sales', `₱${salesData.recentSales.toLocaleString()}`],
-    ['Monthly Sales', `₱${salesData.monthlySales?.toLocaleString() || '0'}`],
+    ['Recent Sales (Last 7 Days)', `₱${recentSales.toLocaleString()}`],
+    ['Daily Average', `₱${dailyAverage.toFixed(2)}`],
     ['Total Transactions', salesData.totalTransactions.toString()],
     ['Average Transaction Value', `₱${salesData.avgTransactionValue.toFixed(2)}`]
   ];
@@ -92,27 +111,29 @@ export const generateSalesPDF = async (salesData, transactions) => {
   yPos = doc.lastAutoTable.finalY + 15;
 
   // Daily Sales Table
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Daily Sales Breakdown (Last 7 Days)', 20, yPos);
-  yPos += 10;
+  if (salesData.dailySales && salesData.dailySales.length > 0) {
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Sales Breakdown by Period', 20, yPos);
+    yPos += 10;
 
-  const dailySalesData = salesData.dailySales.map(day => [
-    day.date,
-    `₱${day.sales.toLocaleString()}`,
-    day.transactions.toString()
-  ]);
+    const dailySalesData = salesData.dailySales.map(day => [
+      day.date,
+      `₱${day.sales.toLocaleString()}`,
+      day.transactions.toString()
+    ]);
 
-  autoTable(doc, {
-    startY: yPos,
-    head: [['Date', 'Sales Amount', 'Transactions']],
-    body: dailySalesData,
-    theme: 'grid',
-    headStyles: { fillColor: [41, 128, 185] },
-    styles: { fontSize: 10 }
-  });
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Period', 'Sales Amount', 'Transactions']],
+      body: dailySalesData,
+      theme: 'grid',
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 10 }
+    });
 
-  yPos = doc.lastAutoTable.finalY + 15;
+    yPos = doc.lastAutoTable.finalY + 15;
+  }
 
   // Recent Transactions Table (Top 10)
   if (transactions && transactions.length > 0) {
@@ -150,7 +171,7 @@ export const generateSalesPDF = async (salesData, transactions) => {
   }
 
   // Try to add chart
-  yPos = await addChartToPDF(doc, 'sales-chart', yPos, 'Daily Sales Chart');
+  yPos = await addChartToPDF(doc, 'sales-chart', yPos, 'Sales Trend Chart');
 
   return doc;
 };
@@ -186,27 +207,29 @@ export const generateInventoryPDF = async (inventoryData, products) => {
   yPos = doc.lastAutoTable.finalY + 15;
 
   // Category Distribution Table
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Inventory by Category', 20, yPos);
-  yPos += 10;
+  if (inventoryData.categoryData && inventoryData.categoryData.length > 0) {
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Inventory by Category', 20, yPos);
+    yPos += 10;
 
-  const categoryData = inventoryData.categoryData.map(cat => [
-    cat.category,
-    cat.count.toString(),
-    `₱${cat.value.toLocaleString()}`
-  ]);
+    const categoryData = inventoryData.categoryData.map(cat => [
+      cat.category,
+      cat.count.toString(),
+      `₱${cat.value.toLocaleString()}`
+    ]);
 
-  autoTable(doc, {
-    startY: yPos,
-    head: [['Category', 'Items Count', 'Total Value']],
-    body: categoryData,
-    theme: 'grid',
-    headStyles: { fillColor: [230, 126, 34] },
-    styles: { fontSize: 10 }
-  });
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Category', 'Items Count', 'Total Value']],
+      body: categoryData,
+      theme: 'grid',
+      headStyles: { fillColor: [230, 126, 34] },
+      styles: { fontSize: 10 }
+    });
 
-  yPos = doc.lastAutoTable.finalY + 15;
+    yPos = doc.lastAutoTable.finalY + 15;
+  }
 
   // Low Stock Items Table
   if (inventoryData.lowStockItems.length > 0) {
@@ -308,6 +331,14 @@ export const generateEmployeePDF = async (employeeData, notifications, users) =>
   const doc = new jsPDF();
   let yPos = addPDFHeader(doc, 'EMPLOYEE REPORT');
 
+  // Add date range info if available
+  if (employeeData.dateRange) {
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Performance Period: ${employeeData.dateRange.start} to ${employeeData.dateRange.end}`, 20, yPos);
+    yPos += 10;
+  }
+
   // Summary Statistics Table
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
@@ -318,7 +349,8 @@ export const generateEmployeePDF = async (employeeData, notifications, users) =>
     ['Total Employees', employeeData.totalEmployees.toString()],
     ['Administrators', employeeData.adminCount.toString()],
     ['Regular Employees', employeeData.employeeCount.toString()],
-    ['Recent Notifications', notifications.length.toString()]
+    ['Active Sellers', employeeData.employeePerformance.filter(emp => emp.transactions > 0).length.toString()],
+    ['Recent Notifications', notifications?.length?.toString() || '0']
   ];
 
   autoTable(doc, {
@@ -333,29 +365,31 @@ export const generateEmployeePDF = async (employeeData, notifications, users) =>
   yPos = doc.lastAutoTable.finalY + 15;
 
   // Employee Performance Table
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Employee Sales Performance', 20, yPos);
-  yPos += 10;
+  if (employeeData.employeePerformance && employeeData.employeePerformance.length > 0) {
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Employee Sales Performance', 20, yPos);
+    yPos += 10;
 
-  const performanceData = employeeData.employeePerformance.map(emp => [
-    emp.name,
-    emp.role,
-    emp.transactions.toString(),
-    `₱${emp.sales.toLocaleString()}`,
-    `₱${emp.avgSale.toFixed(2)}`
-  ]);
+    const performanceData = employeeData.employeePerformance.map(emp => [
+      emp.name,
+      emp.role,
+      emp.transactions.toString(),
+      `₱${emp.sales.toLocaleString()}`,
+      `₱${emp.avgSale.toFixed(2)}`
+    ]);
 
-  autoTable(doc, {
-    startY: yPos,
-    head: [['Name', 'Role', 'Transactions', 'Total Sales', 'Avg Sale']],
-    body: performanceData,
-    theme: 'grid',
-    headStyles: { fillColor: [155, 89, 182] },
-    styles: { fontSize: 9 }
-  });
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Name', 'Role', 'Transactions', 'Total Sales', 'Avg Sale']],
+      body: performanceData,
+      theme: 'grid',
+      headStyles: { fillColor: [155, 89, 182] },
+      styles: { fontSize: 9 }
+    });
 
-  yPos = doc.lastAutoTable.finalY + 15;
+    yPos = doc.lastAutoTable.finalY + 15;
+  }
 
   // Employee Details Table
   if (users && users.length > 0) {

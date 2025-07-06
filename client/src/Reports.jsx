@@ -12,6 +12,20 @@ const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('sales');
 
+  // Date range state
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
+    endDate: new Date().toISOString().split('T')[0] // today
+  });
+
+  // Quick date range presets
+  const datePresets = [
+    { label: 'Last 7 Days', days: 7 },
+    { label: 'Last 30 Days', days: 30 },
+    { label: 'Last 90 Days', days: 90 },
+    { label: 'This Year', days: 365 }
+  ];
+
   // Fetch all data on component mount
   useEffect(() => {
     const fetchAllData = async () => {
@@ -45,47 +59,116 @@ const Reports = () => {
     fetchAllData();
   }, []);
 
-  // Sales Analytics
+  // Filter transactions by date range
+  const getFilteredTransactions = () => {
+    const startDate = new Date(dateRange.startDate);
+    const endDate = new Date(dateRange.endDate);
+    // Set end date to end of day
+    endDate.setHours(23, 59, 59, 999);
+
+    return transactions.filter(t => {
+      const transactionDate = new Date(t.createdAt);
+      return transactionDate >= startDate && transactionDate <= endDate;
+    });
+  };
+
+  // Handle date range change
+  const handleDateRangeChange = (field, value) => {
+    setDateRange(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle preset date range selection
+  const handlePresetSelect = (days) => {
+    const endDate = new Date();
+    const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+
+    setDateRange({
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
+    });
+  };
+
+  // Sales Analytics with date filtering
   const getSalesAnalytics = () => {
-    const today = new Date();
-    const last7Days = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const last30Days = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const filteredTransactions = getFilteredTransactions();
+    const startDate = new Date(dateRange.startDate);
+    const endDate = new Date(dateRange.endDate);
 
-    const recentTransactions = transactions.filter(t => new Date(t.createdAt) >= last7Days);
-    const monthlyTransactions = transactions.filter(t => new Date(t.createdAt) >= last30Days);
+    const totalSales = filteredTransactions.reduce((sum, t) => sum + (t.transactionTotal || 0), 0);
+    const totalTransactions = filteredTransactions.length;
+    const avgTransactionValue = totalTransactions > 0 ? totalSales / totalTransactions : 0;
 
-    const totalSales = transactions.reduce((sum, t) => sum + (t.transactionTotal || 0), 0);
-    const recentSales = recentTransactions.reduce((sum, t) => sum + (t.transactionTotal || 0), 0);
-    const monthlySales = monthlyTransactions.reduce((sum, t) => sum + (t.transactionTotal || 0), 0);
-
-    // Daily sales for the last 7 days
+    // Generate daily sales data for the selected range
     const dailySales = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
-      const dayTransactions = transactions.filter(t => {
-        const tDate = new Date(t.createdAt);
-        return tDate.toDateString() === date.toDateString();
+    const dayDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+    // If range is too large, group by weeks or months
+    const groupBy = dayDiff > 90 ? 'month' : dayDiff > 30 ? 'week' : 'day';
+
+    if (groupBy === 'day') {
+      for (let i = 0; i <= dayDiff; i++) {
+        const date = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+        const dayTransactions = filteredTransactions.filter(t => {
+          const tDate = new Date(t.createdAt);
+          return tDate.toDateString() === date.toDateString();
+        });
+        const dayTotal = dayTransactions.reduce((sum, t) => sum + (t.transactionTotal || 0), 0);
+        dailySales.push({
+          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          sales: dayTotal,
+          transactions: dayTransactions.length
+        });
+      }
+    } else if (groupBy === 'week') {
+      const weeks = Math.ceil(dayDiff / 7);
+      for (let i = 0; i < weeks; i++) {
+        const weekStart = new Date(startDate.getTime() + i * 7 * 24 * 60 * 60 * 1000);
+        const weekEnd = new Date(Math.min(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000, endDate.getTime()));
+
+        const weekTransactions = filteredTransactions.filter(t => {
+          const tDate = new Date(t.createdAt);
+          return tDate >= weekStart && tDate <= weekEnd;
+        });
+        const weekTotal = weekTransactions.reduce((sum, t) => sum + (t.transactionTotal || 0), 0);
+        dailySales.push({
+          date: `Week ${i + 1}`,
+          sales: weekTotal,
+          transactions: weekTransactions.length
+        });
+      }
+    } else {
+      // Group by month
+      const months = {};
+      filteredTransactions.forEach(t => {
+        const date = new Date(t.createdAt);
+        const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+        const monthLabel = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+        if (!months[monthKey]) {
+          months[monthKey] = { date: monthLabel, sales: 0, transactions: 0 };
+        }
+        months[monthKey].sales += t.transactionTotal || 0;
+        months[monthKey].transactions += 1;
       });
-      const dayTotal = dayTransactions.reduce((sum, t) => sum + (t.transactionTotal || 0), 0);
-      dailySales.push({
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        sales: dayTotal,
-        transactions: dayTransactions.length
-      });
+      dailySales.push(...Object.values(months));
     }
 
     return {
       totalSales,
-      recentSales,
-      monthlySales,
+      totalTransactions,
+      avgTransactionValue,
       dailySales,
-      totalTransactions: transactions.length,
-      recentTransactions: recentTransactions.length,
-      avgTransactionValue: transactions.length > 0 ? totalSales / transactions.length : 0
+      dateRange: {
+        start: startDate.toLocaleDateString(),
+        end: endDate.toLocaleDateString()
+      }
     };
   };
 
-  // Inventory Analytics
+  // Inventory Analytics (unchanged as it's not date-dependent for current metrics)
   const getInventoryAnalytics = () => {
     const lowStockItems = products.filter(p => (p.itemCount || 0) < 10);
     const outOfStockItems = products.filter(p => (p.itemCount || 0) === 0);
@@ -122,10 +205,12 @@ const Reports = () => {
     };
   };
 
-  // Employee Analytics
+  // Employee Analytics with date filtering
   const getEmployeeAnalytics = () => {
+    const filteredTransactions = getFilteredTransactions();
+
     const employeePerformance = users.reduce((acc, user) => {
-      const userTransactions = transactions.filter(t => t.transactionEmployee === user.userUsername);
+      const userTransactions = filteredTransactions.filter(t => t.transactionEmployee === user.userUsername);
       const userSales = userTransactions.reduce((sum, t) => sum + (t.transactionTotal || 0), 0);
 
       acc.push({
@@ -143,22 +228,43 @@ const Reports = () => {
       employeePerformance: employeePerformance.sort((a, b) => b.sales - a.sales),
       totalEmployees: users.length,
       adminCount: users.filter(u => u.userRole === 'admin').length,
-      employeeCount: users.filter(u => u.userRole === 'employee').length
+      employeeCount: users.filter(u => u.userRole === 'employee').length,
+      dateRange: {
+        start: new Date(dateRange.startDate).toLocaleDateString(),
+        end: new Date(dateRange.endDate).toLocaleDateString()
+      }
     };
   };
 
-  // Export Functions
+  // Export Functions with date range
   const handleExport = async () => {
     try {
+      const exportData = {
+        dateRange: {
+          start: dateRange.startDate,
+          end: dateRange.endDate,
+          startFormatted: new Date(dateRange.startDate).toLocaleDateString(),
+          endFormatted: new Date(dateRange.endDate).toLocaleDateString()
+        }
+      };
+
       if (activeTab === 'sales') {
         const salesData = getSalesAnalytics();
-        await exportToPDF('sales', salesData, { transactions });
+        await exportToPDF('sales', { ...salesData, ...exportData }, {
+          transactions: getFilteredTransactions()
+        });
       } else if (activeTab === 'inventory') {
         const inventoryData = getInventoryAnalytics();
-        await exportToPDF('inventory', inventoryData, { products });
+        await exportToPDF('inventory', { ...inventoryData, ...exportData }, {
+          products
+        });
       } else if (activeTab === 'employee') {
         const employeeData = getEmployeeAnalytics();
-        await exportToPDF('employee', employeeData, { notifications, users });
+        await exportToPDF('employee', { ...employeeData, ...exportData }, {
+          notifications,
+          users,
+          transactions: getFilteredTransactions()
+        });
       }
     } catch (error) {
       console.error('Export error:', error);
@@ -209,16 +315,51 @@ const Reports = () => {
           </div>
         </div>
 
+        {/* Date Range Controls */}
+        <div className={styles.dateControls}>
+          <div className={styles.dateInputs}>
+            <div className={styles.dateInput}>
+              <label>From:</label>
+              <input
+                type="date"
+                value={dateRange.startDate}
+                onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
+                max={dateRange.endDate}
+              />
+            </div>
+            <div className={styles.dateInput}>
+              <label>To:</label>
+              <input
+                type="date"
+                value={dateRange.endDate}
+                onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
+                min={dateRange.startDate}
+                max={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+          </div>
+          <div className={styles.datePresets}>
+            {datePresets.map((preset, index) => (
+              <button
+                key={index}
+                className={styles.presetButton}
+                onClick={() => handlePresetSelect(preset.days)}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {activeTab === 'sales' && (
           <div className={styles.tabContent}>
+            <div className={styles.dateRangeInfo}>
+              <p>Showing data from {salesData.dateRange.start} to {salesData.dateRange.end}</p>
+            </div>
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
                 <h3>Total Sales</h3>
                 <p className={styles.statValue}>₱{salesData.totalSales.toLocaleString()}</p>
-              </div>
-              <div className={styles.statCard}>
-                <h3>Last 7 Days</h3>
-                <p className={styles.statValue}>₱{salesData.recentSales.toLocaleString()}</p>
               </div>
               <div className={styles.statCard}>
                 <h3>Total Transactions</h3>
@@ -228,10 +369,16 @@ const Reports = () => {
                 <h3>Avg Transaction</h3>
                 <p className={styles.statValue}>₱{salesData.avgTransactionValue.toFixed(2)}</p>
               </div>
+              <div className={styles.statCard}>
+                <h3>Daily Average</h3>
+                <p className={styles.statValue}>
+                  ₱{(salesData.totalSales / Math.max(1, Math.ceil((new Date(dateRange.endDate) - new Date(dateRange.startDate)) / (1000 * 60 * 60 * 24)))).toFixed(2)}
+                </p>
+              </div>
             </div>
 
             <div className={styles.chartContainer} id="sales-chart">
-              <h3>Daily Sales (Last 7 Days)</h3>
+              <h3>Sales Trend</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={salesData.dailySales}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -249,6 +396,9 @@ const Reports = () => {
 
         {activeTab === 'inventory' && (
           <div className={styles.tabContent}>
+            <div className={styles.dateRangeInfo}>
+              <p>Current inventory status (not date-filtered)</p>
+            </div>
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
                 <h3>Total Inventory Value</h3>
@@ -338,6 +488,9 @@ const Reports = () => {
 
         {activeTab === 'employee' && (
           <div className={styles.tabContent}>
+            <div className={styles.dateRangeInfo}>
+              <p>Showing performance data from {employeeData.dateRange.start} to {employeeData.dateRange.end}</p>
+            </div>
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
                 <h3>Total Employees</h3>
@@ -352,8 +505,10 @@ const Reports = () => {
                 <p className={styles.statValue}>{employeeData.employeeCount}</p>
               </div>
               <div className={styles.statCard}>
-                <h3>Recent Notifications</h3>
-                <p className={styles.statValue}>{notifications.length}</p>
+                <h3>Active Sellers</h3>
+                <p className={styles.statValue}>
+                  {employeeData.employeePerformance.filter(emp => emp.transactions > 0).length}
+                </p>
               </div>
             </div>
 

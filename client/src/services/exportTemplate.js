@@ -1,3 +1,4 @@
+// exportTemplates.js
 export const generateSalesReport = (salesData) => {
   const reportDate = new Date().toLocaleDateString();
 
