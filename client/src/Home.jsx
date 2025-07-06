@@ -16,6 +16,9 @@ import {
   FiActivity,
   FiArrowUp,
   FiArrowDown,
+  FiX,
+  FiPackage,
+  FiAlertCircle,
 } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import DashboardHeader from './components/DashboardHeader';
@@ -29,6 +32,8 @@ const Home = () => {
     notifications: [],
     loading: true
   });
+
+  const [showInventoryModal, setShowInventoryModal] = useState(false);
 
   // Fetch dashboard data
   useEffect(() => {
@@ -124,6 +129,8 @@ const Home = () => {
       totalTransactions: transactions.length,
       lowStockCount: lowStockItems.length,
       outOfStockCount: outOfStockItems.length,
+      lowStockItems,
+      outOfStockItems,
       totalInventoryValue,
       totalEmployees: users.length,
       unreadNotifications: notifications.length,
@@ -144,6 +151,99 @@ const Home = () => {
     { label: 'Help', icon: FiHelpCircle, path: '/help' },
     { label: 'Registration', icon: FiUserPlus, path: '/registration' },
   ];
+
+  // Modal component
+  const InventoryModal = ({ isOpen, onClose, metrics }) => {
+    if (!isOpen) return null;
+
+    return (
+      <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalHeader}>
+            <h3>
+              <FiAlertTriangle className={styles.modalIcon} />
+              Inventory Alerts
+            </h3>
+            <button onClick={onClose} className={styles.closeButton}>
+              <FiX />
+            </button>
+          </div>
+
+          <div className={styles.modalBody}>
+            {metrics.outOfStockItems.length > 0 && (
+              <div className={styles.alertSection}>
+                <h4 className={styles.alertSectionTitle}>
+                  <FiAlertCircle className={styles.alertIcon} />
+                  Out of Stock ({metrics.outOfStockItems.length})
+                </h4>
+                <div className={styles.productList}>
+                  {metrics.outOfStockItems.map((product, index) => (
+                    <div key={index} className={`${styles.productItem} ${styles.outOfStock}`}>
+                      <div className={styles.productInfo}>
+                        <FiPackage className={styles.productIcon} />
+                        <div>
+                          <div className={styles.productName}>{product.itemName || 'Unknown Product'}</div>
+                          <div className={styles.productDetails}>
+                            SKU: {product.itemSku || 'N/A'} | Price: ₱{(product.itemPrice || 0).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      <div className={styles.stockLevel}>
+                        <span className={styles.stockBadge}>0 in stock</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {metrics.lowStockItems.length > 0 && (
+              <div className={styles.alertSection}>
+                <h4 className={styles.alertSectionTitle}>
+                  <FiAlertTriangle className={styles.alertIcon} />
+                  Low Stock ({metrics.lowStockItems.length})
+                </h4>
+                <div className={styles.productList}>
+                  {metrics.lowStockItems.map((product, index) => (
+                    <div key={index} className={`${styles.productItem} ${styles.lowStock}`}>
+                      <div className={styles.productInfo}>
+                        <FiPackage className={styles.productIcon} />
+                        <div>
+                          <div className={styles.productName}>{product.itemName || 'Unknown Product'}</div>
+                          <div className={styles.productDetails}>
+                            SKU: {product.itemSku || 'N/A'} | Price: ₱{(product.itemPrice || 0).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      <div className={styles.stockLevel}>
+                        <span className={styles.stockBadge}>{product.itemCount || 0} left</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {metrics.criticalAlerts === 0 && (
+              <div className={styles.noAlerts}>
+                <FiPackage className={styles.noAlertsIcon} />
+                <p>All products are well stocked!</p>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.modalFooter}>
+            <RouterLink to="/inventory" className={styles.manageButton}>
+              Manage Inventory
+            </RouterLink>
+            <button onClick={onClose} className={styles.cancelButton}>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   if (dashboardData.loading) {
     return (
@@ -273,7 +373,10 @@ const Home = () => {
           </div>
 
           {metrics.criticalAlerts > 0 && (
-            <div className={`${styles.insightCard} ${styles.alertInsight}`}>
+            <div
+              className={`${styles.insightCard} ${styles.alertInsight} ${styles.clickable}`}
+              onClick={() => setShowInventoryModal(true)}
+            >
               <h3 className={styles.insightTitle}>
                 <FiAlertTriangle className={styles.insightIcon} />
                 Attention Required
@@ -289,14 +392,21 @@ const Home = () => {
                     <strong>{metrics.lowStockCount}</strong> items are running low
                   </div>
                 )}
-                <RouterLink to="/inventory" className={styles.alertAction}>
-                  Manage Inventory →
-                </RouterLink>
+                <div className={styles.alertAction}>
+                  Click to view details →
+                </div>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Modal */}
+      <InventoryModal
+        isOpen={showInventoryModal}
+        onClose={() => setShowInventoryModal(false)}
+        metrics={metrics}
+      />
     </>
   );
 };
