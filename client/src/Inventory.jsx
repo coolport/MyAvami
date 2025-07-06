@@ -25,24 +25,27 @@ function Inventory() {
   const editForm = useForm()
 
   useEffect(() => {
-    console.log('Starting data fetch sequence...')
+    console.log('Loading suppliers and transactions...')
 
-    fetchSuppliers()
-      .then(() => {
-        console.log('Suppliers loaded, fetching transactions...')
-        return fetchTransactions()
-      })
-      .then(() => {
-        console.log('Transactions loaded, fetching items...')
-        return getItems()
-      })
-      .then(() => {
-        console.log('All data loaded successfully')
-      })
-      .catch(error => {
-        console.error('Error in data loading sequence:', error)
-      })
+    const loadBaseData = async () => {
+      try {
+        await fetchSuppliers()
+        await fetchTransactions()
+        console.log('Base data loaded successfully')
+      } catch (error) {
+        console.error('Error loading base data:', error)
+      }
+    }
+
+    loadBaseData()
   }, [])
+
+  useEffect(() => {
+    if (suppliers.length > 0 && transactions.length > 0) {
+      console.log('Base data ready, loading items...')
+      getItems()
+    }
+  }, [suppliers, transactions])
 
   // Filter inventory based on search term
   useEffect(() => {
@@ -181,9 +184,11 @@ function Inventory() {
     }
   }
 
+
   // Calculate item movement based on sales in past 24 hours
   function calculateItemMovement(itemName) {
     const now = new Date()
+    // Fix: Actually use 24 hours (1 day), not 30 days
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
     console.log(`Calculating movement for: ${itemName}`)
@@ -224,6 +229,24 @@ function Inventory() {
     console.log(`Movement status: ${movement}`)
 
     return movement
+  }
+
+  const refreshMovements = async () => {
+    console.log('Refreshing movement calculations...')
+    setLoading(true)
+
+    try {
+      // Reload transactions to get latest data
+      await fetchTransactions()
+      // Reload items to recalculate movements
+      await getItems()
+      showToast("Movement calculations refreshed", "success")
+    } catch (error) {
+      console.error('Error refreshing movements:', error)
+      showToast("Failed to refresh movements", "error")
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function fetchSuppliers() {
@@ -521,10 +544,23 @@ function Inventory() {
             />
           </div>
 
-          <div className={styles.totalItemsBox}>
-            <p className={styles.totalItemsText}>
-              Total Items: {filteredInventory.length}
-            </p>
+          <div className={styles.statsContainer}>
+            <div className={styles.totalItemsBox}>
+              <p className={styles.totalItemsText}>
+                Total Items: {filteredInventory.length}
+              </p>
+            </div>
+
+            {/* Add refresh button */}
+            <button
+              className={`${styles.button} ${styles.refresh}`}
+              onClick={refreshMovements}
+              disabled={loading}
+              title="Refresh movement calculations"
+            >
+              <FiRefreshCw className={loading ? styles.spinning : ''} />
+              Refresh
+            </button>
           </div>
         </div>
 
