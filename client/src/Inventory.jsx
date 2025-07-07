@@ -289,29 +289,60 @@ function Inventory() {
       for (const x in data) {
         const item = data[x]
 
-        // Handle both populated and non-populated supplier data
-        let supplierName = 'Unknown Supplier'
-        let actualSupplierId = item.supplierId
+        // Handle both populated and non-populated supplier data for multiple suppliers
+        let supplierNames = []
+        let actualSupplierIds = []
 
-        if (typeof item.supplierId === 'object' && item.supplierId !== null) {
-          supplierName = item.supplierId.supplierName || 'Unknown Supplier'
-          actualSupplierId = item.supplierId._id
-        } else if (typeof item.supplierId === 'string') {
-          const supplier = suppliers.find(s => s._id === item.supplierId)
-          supplierName = supplier ? supplier.supplierName : 'Unknown Supplier'
-          actualSupplierId = item.supplierId
+        // Check if supplierIds exists (new format) or fall back to supplierId (old format)
+        const supplierField = item.supplierIds || (item.supplierId ? [item.supplierId] : [])
+
+        if (Array.isArray(supplierField) && supplierField.length > 0) {
+          // Multiple suppliers case
+          supplierField.forEach(supplierId => {
+            if (typeof supplierId === 'object' && supplierId !== null) {
+              // Already populated supplier object
+              supplierNames.push(supplierId.supplierName || 'Unknown Supplier')
+              actualSupplierIds.push(supplierId._id)
+            } else if (typeof supplierId === 'string') {
+              // Supplier ID string, need to find supplier data
+              const supplier = suppliers.find(s => s._id === supplierId)
+              supplierNames.push(supplier ? supplier.supplierName : 'Unknown Supplier')
+              actualSupplierIds.push(supplierId)
+            }
+          })
+        } else {
+          // Fallback for old single supplier format or missing data
+          let supplierName = 'Unknown Supplier'
+          let actualSupplierId = item.supplierId
+
+          if (typeof item.supplierId === 'object' && item.supplierId !== null) {
+            supplierName = item.supplierId.supplierName || 'Unknown Supplier'
+            actualSupplierId = item.supplierId._id
+          } else if (typeof item.supplierId === 'string') {
+            const supplier = suppliers.find(s => s._id === item.supplierId)
+            supplierName = supplier ? supplier.supplierName : 'Unknown Supplier'
+            actualSupplierId = item.supplierId
+          }
+
+          if (actualSupplierId) {
+            supplierNames.push(supplierName)
+            actualSupplierIds.push(actualSupplierId)
+          }
         }
 
         // Calculate movement for this item
         const movement = calculateItemMovement(item.itemName)
 
-        const itemWithSupplier = {
+        const itemWithSuppliers = {
           ...item,
-          supplierName: supplierName,
-          supplierId: actualSupplierId,
+          supplierNames: supplierNames,
+          supplierIds: actualSupplierIds,
+          // Keep original fields for backward compatibility
+          supplierName: supplierNames[0] || 'Unknown Supplier',
+          supplierId: actualSupplierIds[0] || item.supplierId,
           movement: movement
         }
-        updatedArray.push(itemWithSupplier)
+        updatedArray.push(itemWithSuppliers)
       }
 
       console.log('Inventory processing complete')
@@ -416,7 +447,7 @@ function Inventory() {
       itemCount: item.itemCount,
       itemImage: item.itemImage,
       itemCategory: item.itemCategory,
-      supplierId: item.supplierId
+      supplierIds: item.supplierIds || [item.supplierId] // Handle both cases
     })
   }
 
@@ -674,9 +705,26 @@ function Inventory() {
                         </span>
                       </td>
                       <td className={styles.tableCell}>
-                        <span className={`${styles.badge} ${styles.blue}`}>
-                          {item.supplierName}
-                        </span>
+                        <div className={styles.supplierContainer}>
+                          {item.supplierNames && item.supplierNames.length > 1 ? (
+                            <div className={styles.multipleSuppliers}>
+                              {item.supplierNames.slice(0, 2).map((name, index) => (
+                                <span key={index} className={`${styles.badge} ${styles.blue}`}>
+                                  {name}
+                                </span>
+                              ))}
+                              {item.supplierNames.length > 2 && (
+                                <span className={`${styles.badge} ${styles.gray}`}>
+                                  +{item.supplierNames.length - 2} more
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className={`${styles.badge} ${styles.blue}`}>
+                              {item.supplierName}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className={styles.tableCell}>
                         <p className={styles.price}>
@@ -846,19 +894,23 @@ function Inventory() {
 
                 <div className={styles.formGroup}>
                   <label className={styles.label}>
-                    Supplier *
+                    Suppliers * (Hold Ctrl/Cmd to select multiple)
                   </label>
                   <select
-                    {...editForm.register("supplierId", { required: true })}
-                    className={styles.select}
+                    {...editForm.register("supplierIds", { required: true })}
+                    multiple
+                    className={`${styles.select} ${styles.multiSelect}`}
+                    style={{ minHeight: "120px" }}
                   >
-                    <option value="">Select a supplier</option>
                     {suppliers.map((supplier) => (
                       <option key={supplier._id} value={supplier._id}>
                         {supplier.supplierName} - {supplier.supplierEmail}
                       </option>
                     ))}
                   </select>
+                  <p style={{ fontSize: "12px", color: "#718096", marginTop: "4px" }}>
+                    Hold Ctrl (Windows) or Cmd (Mac) while clicking to select multiple suppliers
+                  </p>
                 </div>
 
                 <div className={styles.formGroup}>
