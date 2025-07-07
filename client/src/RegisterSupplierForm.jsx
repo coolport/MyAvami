@@ -117,6 +117,8 @@ function RegisterSupplierForm() {
                     style={{ color: "black" }}
                   />
 
+
+
                   <Text color="gray.700">Address</Text>
                   <input
                     id="supplierAddress"
@@ -133,6 +135,37 @@ function RegisterSupplierForm() {
                     type="tel"
                     placeholder="Enter Phone Number"
                     {...register("supplierNumber", {
+                      required: true,
+                      maxLength: {
+                        value: 12,
+                        message: "Phone number must not exceed 12 digits"
+                      },
+                      pattern: {
+                        value: /^\d+$/,
+                        message: "Phone number must contain only digits"
+                      }
+                    })}
+                    style={{ color: "black" }}
+                  />
+
+                  <Text color="gray.700">Contact Person</Text>
+                  <input
+                    id="supplierContactPersonName"
+                    className={styles.input}
+                    placeholder="Enter Contact Person Name"
+                    {...register("supplierContactPersonName", {
+                      required: true,
+                    })}
+                    style={{ color: "black" }}
+                  />
+
+                  <Text color="gray.700">Contact Person No:</Text>
+                  <input
+                    id="supplierContactPersonNumber"
+                    className={styles.input}
+                    type="tel"
+                    placeholder="Enter Contact Person Phone Number"
+                    {...register("supplierContactPersonNumber", {
                       required: true,
                       maxLength: {
                         value: 12,

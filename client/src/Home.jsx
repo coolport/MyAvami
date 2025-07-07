@@ -147,9 +147,9 @@ const Home = () => {
     { label: 'Transaction History', icon: FiClock, path: '/transacthistory' },
     { label: 'Notifications', icon: FiBell, path: '/notifications' },
     { label: 'Reports', icon: FiBarChart2, path: '/reports' },
+    { label: 'Registration', icon: FiUserPlus, path: '/registration' },
     { label: 'Maintenance', icon: FiTool, path: '/maintenance' },
     { label: 'Help', icon: FiHelpCircle, path: '/help' },
-    { label: 'Registration', icon: FiUserPlus, path: '/registration' },
   ];
 
   // Modal component
@@ -184,7 +184,6 @@ const Home = () => {
                         <div>
                           <div className={styles.productName}>{product.itemName || 'Unknown Product'}</div>
                           <div className={styles.productDetails}>
-                            SKU: {product.itemSku || 'N/A'} | Price: ₱{(product.itemPrice || 0).toLocaleString()}
                             Price: ₱{(product.itemPrice || 0).toLocaleString()}
                           </div>
                         </div>
@@ -212,7 +211,6 @@ const Home = () => {
                         <div>
                           <div className={styles.productName}>{product.itemName || 'Unknown Product'}</div>
                           <div className={styles.productDetails}>
-                            SKU: {product.itemSku || 'N/A'} | Price: ₱{(product.itemPrice || 0).toLocaleString()}
                             Price: ₱{(product.itemPrice || 0).toLocaleString()}
                           </div>
                         </div>

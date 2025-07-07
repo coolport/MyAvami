@@ -325,6 +325,7 @@ const Reports = () => {
                 value={dateRange.startDate}
                 onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
                 max={dateRange.endDate}
+                style={{ color: "black" }}
               />
             </div>
             <div className={styles.dateInput}>
@@ -335,6 +336,7 @@ const Reports = () => {
                 onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
                 min={dateRange.startDate}
                 max={new Date().toISOString().split('T')[0]}
+                style={{ color: "black" }}
               />
             </div>
           </div>

@@ -507,16 +507,55 @@ function Inventory() {
 
   // Handle reorder functionality
   function handleReorder(item) {
-    // Find the supplier data for this item
-    const supplier = suppliers.find(s => s._id === item.supplierId)
+    console.log('Handling reorder for item:', item.itemName)
+    console.log('Item supplier data:', {
+      supplierIds: item.supplierIds,
+      supplierNames: item.supplierNames,
+      legacy_supplierId: item.supplierId
+    })
 
-    if (!supplier) {
-      showToast("Supplier information not found. Cannot generate reorder form.", "error")
+    // Handle multiple suppliers (new format)
+    if (item.supplierIds && Array.isArray(item.supplierIds) && item.supplierIds.length > 0) {
+      // Find all suppliers for this item
+      const itemSuppliers = item.supplierIds.map(supplierId => {
+        const supplier = suppliers.find(s => s._id === supplierId)
+        if (!supplier) {
+          console.warn(`Supplier with ID ${supplierId} not found`)
+          return null
+        }
+        return supplier
+      }).filter(supplier => supplier !== null) // Remove null entries
+
+      if (itemSuppliers.length === 0) {
+        showToast("No supplier information found for this item. Cannot generate reorder form.", "error")
+        return
+      }
+
+      console.log(`Found ${itemSuppliers.length} suppliers for ${item.itemName}:`, itemSuppliers.map(s => s.supplierName))
+
+      // Generate reorder forms for all suppliers
+      printReorderForm(item, itemSuppliers, showToast)
       return
     }
 
-    // Call the printReorderForm function from the template
-    printReorderForm(item, supplier, showToast)
+    // Handle single supplier (legacy format)
+    if (item.supplierId) {
+      const supplier = suppliers.find(s => s._id === item.supplierId)
+
+      if (!supplier) {
+        showToast("Supplier information not found. Cannot generate reorder form.", "error")
+        return
+      }
+
+      console.log(`Found single supplier for ${item.itemName}:`, supplier.supplierName)
+
+      // Generate reorder form for single supplier
+      printReorderForm(item, [supplier], showToast)
+      return
+    }
+
+    // No supplier information found
+    showToast("No supplier information available for this item. Cannot generate reorder form.", "error")
   }
 
   function formatPrice(price) {
@@ -569,7 +608,7 @@ function Inventory() {
             <FiSearch className={styles.searchIcon} />
             <input
               className={styles.searchInput}
-              placeholder="Search by name, brand, description, category, or supplier..."
+              placeholder="Search by name or other attribute "
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
