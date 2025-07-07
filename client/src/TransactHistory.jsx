@@ -153,11 +153,11 @@ function TransactHistory() {
       </table>
 
       <div class="right">
-        <h3 class="total">Total: PHP ${transaction.transactionTotal}</h3>
-      </div>
-    </body>
-    </html>
-  `
+        <h3 class="total">Total: PHP ${transaction.transactionTotal.toFixed(2)}</h3 >
+      </div >
+    </body >
+    </html >
+    `
 
     // Open popup *before* doing any logic to avoid being blocked
     const invoiceWindow = window.open("", "_blank")
@@ -217,13 +217,13 @@ function TransactHistory() {
             </Dialog.Body>
             <Dialog.Footer className={styles.modalButtons}>
               <Button
-                className={`${styles.modalButton} ${styles.modalDeleteButton}`}
+                className={`${styles.modalButton} ${styles.modalDeleteButton} `}
                 onClick={confirmDelete}
               >
                 Delete
               </Button>
               <Button
-                className={`${styles.modalButton} ${styles.modalCancelButton}`}
+                className={`${styles.modalButton} ${styles.modalCancelButton} `}
                 onClick={cancelDelete}
                 variant="outline"
               >
