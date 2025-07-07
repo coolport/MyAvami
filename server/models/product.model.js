@@ -40,12 +40,12 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    // Reference to supplier
-    supplierId: {
+    // Reference to suppliers (changed from single to array)
+    supplierIds: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Supplier',
       required: true
-    }
+    }]
   }, { //Options Object (2nd argument in schema func)
   timestamps: true // createdAt, updatedAt (mongoose)
 });

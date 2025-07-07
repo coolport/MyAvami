@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 export const getProducts = async (req, res) => {
   try {
     // Populate supplier data when fetching products
-    const products = await Product.find({}).populate('supplierId', 'supplierName supplierEmail supplierAddress supplierNumber');
+    const products = await Product.find({}).populate('supplierIds', 'supplierName supplierEmail supplierAddress supplierNumber');
     res.status(200).json({ success: true, data: products, string: "hi" });
   } catch (error) {
     console.error("Error fetching products: ", error.message);
@@ -26,19 +26,19 @@ export const postProducts = async (req, res) => {
       p.itemCount &&
       p.itemImage &&
       p.itemCategory &&
-      p.supplierId
+      p.supplierIds && Array.isArray(p.supplierIds) && p.supplierIds.length > 0
     );
 
     if (!isValid) {
       return res.status(400).json({
         success: false,
-        message: "Please provide all fields for every product including supplierId"
+        message: "Please provide all fields for every product including at least one supplier ID"
       });
     }
 
     // Validate all supplier IDs exist
-    const supplierIds = body.map(p => p.supplierId);
-    const uniqueSupplierIds = [...new Set(supplierIds)];
+    const allSupplierIds = body.flatMap(p => p.supplierIds);
+    const uniqueSupplierIds = [...new Set(allSupplierIds)];
 
     try {
       const existingSuppliers = await Supplier.find({ _id: { $in: uniqueSupplierIds } });
@@ -56,7 +56,7 @@ export const postProducts = async (req, res) => {
       const newProducts = await Product.insertMany(body);
       // Populate supplier data in response
       const populatedProducts = await Product.find({ _id: { $in: newProducts.map(p => p._id) } })
-        .populate('supplierId', 'supplierName supplierEmail');
+        .populate('supplierIds', 'supplierName supplierEmail');
 
       res.status(201).json({ success: true, data: populatedProducts });
     } catch (error) {
@@ -75,15 +75,18 @@ export const postProducts = async (req, res) => {
       !product.itemCount ||
       !product.itemImage ||
       !product.itemCategory ||
-      !product.supplierId) {
+      !product.supplierIds ||
+      !Array.isArray(product.supplierIds) ||
+      product.supplierIds.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Please provide all required fields including supplierId"
+        message: "Please provide all required fields including at least one supplier ID"
       });
     }
 
-    // Validate supplier exists
-    if (!mongoose.Types.ObjectId.isValid(product.supplierId)) {
+    // Validate supplier IDs format and existence
+    const invalidIds = product.supplierIds.filter(id => !mongoose.Types.ObjectId.isValid(id));
+    if (invalidIds.length > 0) {
       return res.status(400).json({
         success: false,
         message: "Invalid supplier ID format"
@@ -91,11 +94,11 @@ export const postProducts = async (req, res) => {
     }
 
     try {
-      const supplierExists = await Supplier.findById(product.supplierId);
-      if (!supplierExists) {
+      const existingSuppliers = await Supplier.find({ _id: { $in: product.supplierIds } });
+      if (existingSuppliers.length !== product.supplierIds.length) {
         return res.status(400).json({
           success: false,
-          message: "Supplier not found"
+          message: "One or more suppliers not found"
         });
       }
 
@@ -104,7 +107,7 @@ export const postProducts = async (req, res) => {
 
       // Populate supplier data in response
       const populatedProduct = await Product.findById(newProduct._id)
-        .populate('supplierId', 'supplierName supplierEmail');
+        .populate('supplierIds', 'supplierName supplierEmail');
 
       console.log('REQPARAMS: ', req.body);
       res.status(201).json({ success: true, data: populatedProduct });
@@ -123,9 +126,17 @@ export const putProduct = async (req, res) => {
     return res.status(404).json({ success: false, message: "Invalid Product Id" });
   }
 
-  // If supplierId is being updated, validate it exists
-  if (product.supplierId) {
-    if (!mongoose.Types.ObjectId.isValid(product.supplierId)) {
+  // If supplierIds is being updated, validate it exists
+  if (product.supplierIds) {
+    if (!Array.isArray(product.supplierIds) || product.supplierIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "supplierIds must be a non-empty array"
+      });
+    }
+
+    const invalidIds = product.supplierIds.filter(id => !mongoose.Types.ObjectId.isValid(id));
+    if (invalidIds.length > 0) {
       return res.status(400).json({
         success: false,
         message: "Invalid supplier ID format"
@@ -133,22 +144,22 @@ export const putProduct = async (req, res) => {
     }
 
     try {
-      const supplierExists = await Supplier.findById(product.supplierId);
-      if (!supplierExists) {
+      const existingSuppliers = await Supplier.find({ _id: { $in: product.supplierIds } });
+      if (existingSuppliers.length !== product.supplierIds.length) {
         return res.status(400).json({
           success: false,
-          message: "Supplier not found"
+          message: "One or more suppliers not found"
         });
       }
     } catch (error) {
-      console.error("Error validating supplier: ", error.message);
+      console.error("Error validating suppliers: ", error.message);
       return res.status(500).json({ success: false, message: "Server Error" });
     }
   }
 
   try {
     const updatedProduct = await Product.findByIdAndUpdate(id, product, { new: true })
-      .populate('supplierId', 'supplierName supplierEmail');
+      .populate('supplierIds', 'supplierName supplierEmail');
 
     if (!updatedProduct) {
       return res.status(404).json({ success: false, message: "Product not found" });
@@ -185,7 +196,7 @@ export const deleteProduct = async (req, res) => {
   }
 }
 
-// Optional: Add utility function to get products by supplier
+// Updated function to get products by supplier
 export const getProductsBySupplier = async (req, res) => {
   const { supplierId } = req.params;
 
@@ -194,8 +205,8 @@ export const getProductsBySupplier = async (req, res) => {
   }
 
   try {
-    const products = await Product.find({ supplierId })
-      .populate('supplierId', 'supplierName supplierEmail');
+    const products = await Product.find({ supplierIds: supplierId })
+      .populate('supplierIds', 'supplierName supplierEmail');
     res.status(200).json({ success: true, data: products });
   } catch (error) {
     console.error("Error fetching products by supplier: ", error.message);
