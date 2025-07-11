@@ -65,7 +65,7 @@ function Notifications() {
   }
 
   async function getNotifications() {
-    const url = "http://localhost:5555/notifications"
+    const url = `${import.meta.env.VITE_API_URL}/notifications`
     try {
       const response = await fetch(url)
       const json = await response.json()

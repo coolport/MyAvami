@@ -121,7 +121,7 @@ function RegisterProductForm() {
       supplierId: data.supplierId
     };
 
-    const url = "http://localhost:5555/products";
+    const url = `${import.meta.env.VITE_API_URL}/products`;
     console.log("Product data:", productData);
 
     // Find selected supplier details for notification

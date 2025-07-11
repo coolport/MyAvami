@@ -485,7 +485,7 @@ function Inventory() {
   }
 
   async function confirmDelete() {
-    const url = `http://localhost:5555/products/${deleteConfirm._id}`
+    const url = `${import.meta.env.VITE_API_URL}/products/${deleteConfirm._id}`
     try {
       const response = await fetch(url, {
         method: "DELETE",

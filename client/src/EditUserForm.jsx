@@ -18,7 +18,7 @@ const EditUserForm = () => {
   }, []);
 
   const fetchUsers = async () => {
-    const url = "http://localhost:5555/users";
+    const url = `${import.meta.env.VITE_API_URL}/users`;
     try {
       const response = await fetch(url, {
         method: "GET",
@@ -84,7 +84,7 @@ const EditUserForm = () => {
       if (formData.userPassword) updateData.userPassword = formData.userPassword;
       if (formData.userRole) updateData.userRole = formData.userRole;
 
-      const response = await fetch(`http://localhost:5555/users/${selectedUserId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/${selectedUserId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -124,7 +124,7 @@ const EditUserForm = () => {
     setMessage('');
 
     try {
-      const response = await fetch(`http://localhost:5555/users/${selectedUserId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/${selectedUserId}`, {
         method: 'DELETE',
         credentials: "include",
       });

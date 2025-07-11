@@ -56,7 +56,7 @@ function Transact() {
       transactionPaymentMethod: data.transactionPaymentMethod
     }
 
-    const url = "http://localhost:5555/transactions"
+    const url = `${import.meta.env.VITE_API_URL}/transactions`
     try {
       const response = await fetch(url, {
         method: "POST",

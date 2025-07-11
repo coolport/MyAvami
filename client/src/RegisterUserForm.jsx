@@ -9,7 +9,7 @@ function RegisterUserForm() {
   const { register, handleSubmit, reset } = useForm();
 
   async function onSubmit(data) {
-    const url = "http://localhost:5555/users";
+    const url = `${import.meta.env.VITE_API_URL}/users`;
     console.log(data);
 
     try {

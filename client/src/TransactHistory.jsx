@@ -51,7 +51,7 @@ function TransactHistory() {
   }
 
   async function confirmDelete() {
-    const url = `http://localhost:5555/transactions/${deleteConfirm._id}`
+    const url = `${import.meta.env.VITE_API_URL}/transactions/${deleteConfirm._id}`
     try {
       const response = await fetch(url, { method: "DELETE" })
       if (response.ok) {

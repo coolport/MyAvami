@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "5555:5555"
+    environment:
+      - NODE_ENV=production
+
+  frontend:
+    build:
+      context: ./client
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend

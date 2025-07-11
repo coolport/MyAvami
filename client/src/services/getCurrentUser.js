@@ -1,4 +1,4 @@
-const url = " http://localhost:5555/auth/me"
+const url = `${import.meta.env.VITE_API_URL}/auth/me`
 export async function fetchUser() {
   try {
     const res = await fetch(url, {

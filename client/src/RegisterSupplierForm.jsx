@@ -9,7 +9,7 @@ function RegisterSupplierForm() {
   const { register, handleSubmit, reset } = useForm();
 
   async function onSubmit(data) {
-    const url = "http://localhost:5555/supplier";
+    const url = `${import.meta.env.VITE_API_URL}/supplier`;
     console.log(data);
 
     try {

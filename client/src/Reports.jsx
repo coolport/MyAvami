@@ -35,7 +35,7 @@ const Reports = () => {
           fetch('http://localhost:5555/products'),
           fetch('http://localhost:5555/transactions'),
           fetch('http://localhost:5555/users'),
-          fetch('http://localhost:5555/notifications')
+          fetch(`${import.meta.env.VITE_API_URL}/notifications`)
         ]);
 
         const [productsData, transactionsData, usersData, notificationsData] = await Promise.all([

@@ -84,7 +84,7 @@ const EditSupplierForm = () => {
       if (formData.supplierAddress) updateData.supplierAddress = formData.supplierAddress;
       if (formData.supplierNumber) updateData.supplierNumber = formData.supplierNumber;
 
-      const response = await fetch(`http://localhost:5555/supplier/${selectedSupplierId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/supplier/${selectedSupplierId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ const EditSupplierForm = () => {
     setMessage('');
 
     try {
-      const response = await fetch(`http://localhost:5555/supplier/${selectedSupplierId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/supplier/${selectedSupplierId}`, {
         method: 'DELETE',
         credentials: "include",
       });

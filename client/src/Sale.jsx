@@ -480,7 +480,7 @@ const Sale = () => {
     }
 
     // If it doesn't start with /, add the leading slash
-    return `http://localhost:5555/${imageUrl}`;
+    return `${import.meta.env.VITE_API_URL}/${imageUrl}`;
   };
 
   return (

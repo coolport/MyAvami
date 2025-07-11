@@ -57,7 +57,7 @@ function FaqForm({ onClose }) {
     if (!window.confirm("Delete this FAQ?")) return;
     setError(null);
     try {
-      const res = await fetch(`http://localhost:5555/help/${id}`, { method: "DELETE" });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/help/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "Failed to delete FAQ");
       fetchFaqs();

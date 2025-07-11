@@ -1,4 +1,4 @@
-const url = "http://localhost:5555/notifications";
+const url = `${import.meta.env.VITE_API_URL}/notifications`;
 
 // destructure
 export async function postNotifications({ type, title, message, userInvolved, itemInvolved }) {

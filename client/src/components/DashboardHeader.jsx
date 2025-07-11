@@ -15,7 +15,7 @@ const DashboardHeader = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    const url = "http://localhost:5555/logout"
+    const url = `${import.meta.env.VITE_API_URL}/logout`
     try {
       const res = await fetch(url, {
         method: "POST",
