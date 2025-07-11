@@ -933,7 +933,7 @@ function Inventory() {
 
                 <div className={styles.formGroup}>
                   <label className={styles.label}>
-                    Suppliers * (Hold Ctrl/Cmd to select multiple)
+                    Suppliers
                   </label>
                   <select
                     {...editForm.register("supplierIds", { required: true })}
