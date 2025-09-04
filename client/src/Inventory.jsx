@@ -240,7 +240,7 @@ function Inventory() {
       await fetchTransactions()
       // Reload items to recalculate movements
       await getItems()
-      showToast("Movement calculations refreshed", "success")
+      showToast("Refreshed Inventory", "success")
     } catch (error) {
       console.error('Error refreshing movements:', error)
       showToast("Failed to refresh movements", "error")
@@ -626,7 +626,7 @@ function Inventory() {
               className={`${styles.button} ${styles.refresh}`}
               onClick={refreshMovements}
               disabled={loading}
-              title="Refresh movement calculations"
+              title="Refresh Inventory"
             >
               <FiRefreshCw className={loading ? styles.spinning : ''} />
               Refresh
