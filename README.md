@@ -26,9 +26,8 @@ MyAvami is a comprehensive, modern, and feature-rich inventory management and po
 
 To run the frontend client:
 
-1.  Navigate to the `client` directory:
     ```bash
     cd client
-     npm install
+    npm install
     npm run dev
     ```
