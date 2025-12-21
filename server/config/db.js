@@ -13,11 +13,7 @@ export const connectDB = async () => {
     // ung maiiba lang talaga is this line / env variable
     //const conn = await mongoose.connect(process.env.MONGO_URI);
 
-    //dito pala galing name ng db wtf
-    //end of url u get to name it,
-    //if walang nakalagay, defaults to app name (package.json, etc ,etc) or other 
-    //places 
-    const conn = await mongoose.connect("mongodb://localhost:27017/myavamifinal");
+    const conn = await mongoose.connect(process.env.MONGO_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
 
   } catch (error) {
