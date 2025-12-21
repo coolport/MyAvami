@@ -18,7 +18,7 @@ function RegisterUserForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
 
       const result = await response.json();
@@ -35,15 +35,17 @@ function RegisterUserForm() {
             title: "User Registered",
             message: `New ${data.userRole} account created for ${data.userFullName} (${data.userUsername})`,
             userInvolved: data.userFullName,
-            itemInvolved: `User Account: ${data.userUsername}`
+            itemInvolved: `User Account: ${data.userUsername}`,
           });
         } catch (notificationError) {
-          console.error("Failed to send registration notification:", notificationError);
+          console.error(
+            "Failed to send registration notification:",
+            notificationError,
+          );
           // Don't block the success if notification fails
         }
 
         reset(); // Clear the form after successful registration
-
       } else {
         console.error("Error response:", result);
 
@@ -52,15 +54,17 @@ function RegisterUserForm() {
           await postNotifications({
             type: "error",
             title: "Registration Failed",
-            message: `Failed to register user ${data.userUsername}: ${result.message || 'Unknown error'}`,
+            message: `Failed to register user ${data.userUsername}: ${result.message || "Unknown error"}`,
             userInvolved: data.userFullName || "Unknown User",
-            itemInvolved: `Registration Attempt: ${data.userUsername}`
+            itemInvolved: `Registration Attempt: ${data.userUsername}`,
           });
         } catch (notificationError) {
-          console.error("Failed to send error notification:", notificationError);
+          console.error(
+            "Failed to send error notification:",
+            notificationError,
+          );
         }
       }
-
     } catch (error) {
       console.error("Network error:", error.message);
 
@@ -71,10 +75,13 @@ function RegisterUserForm() {
           title: "Network Error",
           message: `Failed to connect to server during registration: ${error.message}`,
           userInvolved: data.userFullName || "Unknown User",
-          itemInvolved: "User Registration"
+          itemInvolved: "User Registration",
         });
       } catch (notificationError) {
-        console.error("Failed to send network error notification:", notificationError);
+        console.error(
+          "Failed to send network error notification:",
+          notificationError,
+        );
       }
     }
   }
@@ -86,7 +93,14 @@ function RegisterUserForm() {
         <Box width={"50%"} marginTop={50} color={"black"}>
           <div className={styles.container}>
             <div className={styles.registerBox}>
-              <div style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: 24 }}>
+              <div
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  marginBottom: 24,
+                }}
+              >
                 <img src={logo} alt="MyAvami Logo" style={{ height: "60px" }} />
               </div>
               <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>

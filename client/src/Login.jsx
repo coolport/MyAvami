@@ -6,7 +6,6 @@ import { useNavigate } from "react-router";
 import { useState } from "react";
 
 function Login() {
-
   const [userRole, setUserRole] = useState("");
 
   const fetchUser = async () => {
@@ -25,7 +24,7 @@ function Login() {
     } catch (err) {
       console.error("Error fetching user:", err);
     }
-  }
+  };
 
   const navigate = useNavigate();
   const { register, handleSubmit } = useForm();
@@ -59,9 +58,6 @@ function Login() {
         } else if (role === "employee") {
           navigate("/homeemployee");
         }
-
-
-
       } else {
         console.error("Login FAILED:", result.message);
       }
@@ -73,7 +69,14 @@ function Login() {
   return (
     <div className={styles.container}>
       <div className={styles.loginBox}>
-        <div style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: 24 }}>
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: 24,
+          }}
+        >
           <img src={logo} alt="MyAvami Logo" style={{ height: "60px" }} />
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
