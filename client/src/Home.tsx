@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router';
 import {
   FiBox,
@@ -12,7 +12,6 @@ import {
   FiTrendingUp,
   FiDollarSign,
   FiAlertTriangle,
-  FiUsers,
   FiActivity,
   FiArrowUp,
   FiArrowDown,
@@ -20,12 +19,25 @@ import {
   FiPackage,
   FiAlertCircle,
 } from 'react-icons/fi';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import DashboardHeader from './components/DashboardHeader';
+import { getProducts } from './services/inventoryService';
+import { getTransactions, getUsers } from './services/userService';
+import { getNotifications } from './services/notificationService';
+import type { Notification, Product, Transaction, User } from './types';
+import { LOW_STOCK_THRESHOLD } from './utils/format';
 import styles from './styles/Home.module.css';
 
+interface DashboardData {
+  products: Product[];
+  transactions: Transaction[];
+  users: User[];
+  notifications: Notification[];
+  loading: boolean;
+}
+
 const Home = () => {
-  const [dashboardData, setDashboardData] = useState({
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
     products: [],
     transactions: [],
     users: [],
@@ -39,25 +51,18 @@ const Home = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [productsRes, transactionsRes, usersRes, notificationsRes] = await Promise.all([
-          fetch('http://localhost:5555/products'),
-          fetch('http://localhost:5555/transactions'),
-          fetch('http://localhost:5555/users'),
-          fetch(`${import.meta.env.VITE_API_URL}/notifications`)
-        ]);
-
-        const [productsData, transactionsData, usersData, notificationsData] = await Promise.all([
-          productsRes.json(),
-          transactionsRes.json(),
-          usersRes.json(),
-          notificationsRes.json()
+        const [products, transactions, users, notifications] = await Promise.all([
+          getProducts(),
+          getTransactions(),
+          getUsers(),
+          getNotifications()
         ]);
 
         setDashboardData({
-          products: productsData.data || [],
-          transactions: transactionsData.data || [],
-          users: usersData.data || [],
-          notifications: notificationsData.data || [],
+          products,
+          transactions,
+          users,
+          notifications,
           loading: false
         });
       } catch (error) {
@@ -75,7 +80,6 @@ const Home = () => {
 
     const today = new Date();
     const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-    const last7Days = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     // Today's transactions
     const todayTransactions = transactions.filter(t => {
@@ -89,16 +93,13 @@ const Home = () => {
       return tDate.toDateString() === yesterday.toDateString();
     });
 
-    // Recent transactions (last 7 days)
-    const recentTransactions = transactions.filter(t => new Date(t.createdAt) >= last7Days);
-
     // Sales calculations
     const todaySales = todayTransactions.reduce((sum, t) => sum + (t.transactionTotal || 0), 0);
     const yesterdaySales = yesterdayTransactions.reduce((sum, t) => sum + (t.transactionTotal || 0), 0);
     const totalSales = transactions.reduce((sum, t) => sum + (t.transactionTotal || 0), 0);
 
     // Inventory alerts
-    const lowStockItems = products.filter(p => (p.itemCount || 0) < 10 && (p.itemCount || 0) > 0);
+    const lowStockItems = products.filter(p => (p.itemCount || 0) < LOW_STOCK_THRESHOLD && (p.itemCount || 0) > 0);
     const outOfStockItems = products.filter(p => (p.itemCount || 0) === 0);
     const totalInventoryValue = products.reduce((sum, p) => sum + ((p.itemPrice || 0) * (p.itemCount || 0)), 0);
 
@@ -152,99 +153,6 @@ const Home = () => {
     { label: 'Help', icon: FiHelpCircle, path: '/help' },
   ];
 
-  // Modal component
-  const InventoryModal = ({ isOpen, onClose, metrics }) => {
-    if (!isOpen) return null;
-
-    return (
-      <div className={styles.modalOverlay} onClick={onClose}>
-        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-          <div className={styles.modalHeader}>
-            <h3>
-              <FiAlertTriangle className={styles.modalIcon} />
-              Inventory Alerts
-            </h3>
-            <button onClick={onClose} className={styles.closeButton}>
-              <FiX />
-            </button>
-          </div>
-
-          <div className={styles.modalBody}>
-            {metrics.outOfStockItems.length > 0 && (
-              <div className={styles.alertSection}>
-                <h4 className={styles.alertSectionTitle}>
-                  <FiAlertCircle className={styles.alertIcon} />
-                  Out of Stock ({metrics.outOfStockItems.length})
-                </h4>
-                <div className={styles.productList}>
-                  {metrics.outOfStockItems.map((product, index) => (
-                    <div key={index} className={`${styles.productItem} ${styles.outOfStock}`}>
-                      <div className={styles.productInfo}>
-                        <FiPackage className={styles.productIcon} />
-                        <div>
-                          <div className={styles.productName}>{product.itemName || 'Unknown Product'}</div>
-                          <div className={styles.productDetails}>
-                            Price: ₱{(product.itemPrice || 0).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                      <div className={styles.stockLevel}>
-                        <span className={styles.stockBadge}>0 in stock</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {metrics.lowStockItems.length > 0 && (
-              <div className={styles.alertSection}>
-                <h4 className={styles.alertSectionTitle}>
-                  <FiAlertTriangle className={styles.alertIcon} />
-                  Low Stock ({metrics.lowStockItems.length})
-                </h4>
-                <div className={styles.productList}>
-                  {metrics.lowStockItems.map((product, index) => (
-                    <div key={index} className={`${styles.productItem} ${styles.lowStock}`}>
-                      <div className={styles.productInfo}>
-                        <FiPackage className={styles.productIcon} />
-                        <div>
-                          <div className={styles.productName}>{product.itemName || 'Unknown Product'}</div>
-                          <div className={styles.productDetails}>
-                            Price: ₱{(product.itemPrice || 0).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                      <div className={styles.stockLevel}>
-                        <span className={styles.stockBadge}>{product.itemCount || 0} left</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {metrics.criticalAlerts === 0 && (
-              <div className={styles.noAlerts}>
-                <FiPackage className={styles.noAlertsIcon} />
-                <p>All products are well stocked!</p>
-              </div>
-            )}
-          </div>
-
-          <div className={styles.modalFooter}>
-            <RouterLink to="/inventory" className={styles.manageButton}>
-              Manage Inventory
-            </RouterLink>
-            <button onClick={onClose} className={styles.cancelButton}>
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   if (dashboardData.loading) {
     return (
       <>
@@ -289,7 +197,6 @@ const Home = () => {
             })}
           </div>
         </div>
-        {/* Key Metrics Overview */}
 
         <div className={styles.metricsSection}>
           <h2 className={styles.sectionTitle}>Today's Overview</h2>
@@ -350,8 +257,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
-
         {/* Recent Activity & Insights */}
         <div className={styles.insightsSection}>
           <div className={styles.insightCard}>
@@ -401,12 +306,94 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Modal */}
-      <InventoryModal
-        isOpen={showInventoryModal}
-        onClose={() => setShowInventoryModal(false)}
-        metrics={metrics}
-      />
+      {/* Inventory Alerts Modal */}
+      {showInventoryModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowInventoryModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>
+                <FiAlertTriangle className={styles.modalIcon} />
+                Inventory Alerts
+              </h3>
+              <button onClick={() => setShowInventoryModal(false)} className={styles.closeButton}>
+                <FiX />
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              {metrics.outOfStockItems.length > 0 && (
+                <div className={styles.alertSection}>
+                  <h4 className={styles.alertSectionTitle}>
+                    <FiAlertCircle className={styles.alertIcon} />
+                    Out of Stock ({metrics.outOfStockItems.length})
+                  </h4>
+                  <div className={styles.productList}>
+                    {metrics.outOfStockItems.map((product, index) => (
+                      <div key={product._id || index} className={`${styles.productItem} ${styles.outOfStock}`}>
+                        <div className={styles.productInfo}>
+                          <FiPackage className={styles.productIcon} />
+                          <div>
+                            <div className={styles.productName}>{product.itemName || 'Unknown Product'}</div>
+                            <div className={styles.productDetails}>
+                              Price: ₱{(product.itemPrice || 0).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className={styles.stockLevel}>
+                          <span className={styles.stockBadge}>0 in stock</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {metrics.lowStockItems.length > 0 && (
+                <div className={styles.alertSection}>
+                  <h4 className={styles.alertSectionTitle}>
+                    <FiAlertTriangle className={styles.alertIcon} />
+                    Low Stock ({metrics.lowStockItems.length})
+                  </h4>
+                  <div className={styles.productList}>
+                    {metrics.lowStockItems.map((product, index) => (
+                      <div key={product._id || index} className={`${styles.productItem} ${styles.lowStock}`}>
+                        <div className={styles.productInfo}>
+                          <FiPackage className={styles.productIcon} />
+                          <div>
+                            <div className={styles.productName}>{product.itemName || 'Unknown Product'}</div>
+                            <div className={styles.productDetails}>
+                              Price: ₱{(product.itemPrice || 0).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className={styles.stockLevel}>
+                          <span className={styles.stockBadge}>{product.itemCount || 0} left</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {metrics.criticalAlerts === 0 && (
+                <div className={styles.noAlerts}>
+                  <FiPackage className={styles.noAlertsIcon} />
+                  <p>All products are well stocked!</p>
+                </div>
+              )}
+            </div>
+
+            <div className={styles.modalFooter}>
+              <RouterLink to="/inventory" className={styles.manageButton}>
+                Manage Inventory
+              </RouterLink>
+              <button onClick={() => setShowInventoryModal(false)} className={styles.cancelButton}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
