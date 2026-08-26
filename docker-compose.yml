@@ -1,32 +1,50 @@
-version: "3.8"
-
 services:
   backend:
     build:
       context: .
       dockerfile: server/Dockerfile
+    restart: unless-stopped
     ports:
       - "5555:5555"
     environment:
       - NODE_ENV=production
       - MONGO_URI=mongodb://mongo:27017/myavamifinal
+      # Use a long random value for any real deployment.
+      - SESSION_SECRET=change-me-in-production
+    volumes:
+      # Persist uploaded product images across container rebuilds.
+      - uploads:/app/public/uploads
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
 
   frontend:
     build:
       context: ./client
+      args:
+        # Baked into the bundle at build time; browser calls this directly.
+        VITE_API_URL: http://localhost:5555
+    restart: unless-stopped
     ports:
       - "5173:5173"
     depends_on:
       - backend
 
   mongo:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
+    image: mongo:7
+    restart: unless-stopped
+    # No host port published: the backend uses the internal network, and a
+    # host mongod may already occupy 27017. Inspect via:
+    #   docker compose exec mongo mongosh
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
 volumes:
   mongo-data:
+  uploads:

@@ -1,2 +1,9 @@
 node_modules
 dist
+.env
+.env.*
+*.bak
+*.swp
+Session.vim
+Dockerfile
+.dockerignore
