@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import PageHeader from "./components/PageHeader";
+import { getFaqs } from "./services/helpService";
 import adrianDev from "./assets/adrian_dev.png";
 import lantingDev from "./assets/lanting_dev.jpg";
 import aidanDev from "./assets/aidan_dev.png";
 import styles from "./styles/Help.module.css";
 
-function FAQItem({ question, answer }) {
+function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -26,7 +27,13 @@ function FAQItem({ question, answer }) {
   );
 }
 
-function FlipCard({ frontImage, frontText, backText }) {
+interface FlipCardProps {
+  frontImage: string;
+  frontText: React.ReactNode;
+  backText: React.ReactNode;
+}
+
+function FlipCard({ frontImage, frontText, backText }: FlipCardProps) {
   const [flipped, setFlipped] = useState(false);
 
   return (
@@ -62,29 +69,16 @@ function FlipCard({ frontImage, frontText, backText }) {
 }
 
 function Help() {
-  const [helpData, setHelpData] = useState([]);
+  const [helpData, setHelpData] = useState<Awaited<ReturnType<typeof getFaqs>>>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/help`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-          setHelpData(data.data);
-        } else {
-          throw new Error(data.message || 'API returned success: false');
-        }
+        setHelpData(await getFaqs());
       } catch (err) {
-        console.error('Fetch error:', err);
-        setError(err.message);
+        setError((err as Error).message);
       } finally {
         setLoading(false);
       }

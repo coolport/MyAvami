@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
 import styles from "./styles/FaqForm.module.css";
+import {
+  getFaqs,
+  createFaq,
+  updateFaq,
+  deleteFaq,
+} from "./services/helpService";
+import type { Faq } from "./types";
 
-function FaqForm({ onClose }) {
-  const [faqs, setFaqs] = useState([]);
+function FaqForm({ onClose }: { onClose: () => void }) {
+  const [faqs, setFaqs] = useState<Faq[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(null);
+  const [editing, setEditing] = useState<Faq | null>(null);
   const [form, setForm] = useState({ question: "", answer: "" });
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFaqs();
@@ -16,57 +23,48 @@ function FaqForm({ onClose }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("http://localhost:5555/help");
-      const data = await res.json();
-      if (data.success) setFaqs(data.data);
-      else setError(data.message || "Failed to fetch FAQs");
+      setFaqs(await getFaqs());
     } catch (e) {
-      setError(e.message);
+      setError((e as Error).message);
     }
     setLoading(false);
   }
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     try {
-      const url = editing
-        ? `http://localhost:5555/help/${editing._id}`
-        : "http://localhost:5555/help";
-      const method = editing ? "PUT" : "POST";
-      const body = JSON.stringify({
-        helpQuestion: form.question,
-        helpAnswer: form.answer,
-      });
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body,
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || "Failed to save FAQ");
+      if (editing) {
+        await updateFaq(editing._id, {
+          helpQuestion: form.question,
+          helpAnswer: form.answer,
+        });
+      } else {
+        await createFaq({
+          helpQuestion: form.question,
+          helpAnswer: form.answer,
+        });
+      }
       setForm({ question: "", answer: "" });
       setEditing(null);
       fetchFaqs();
     } catch (e) {
-      setError(e.message);
+      setError((e as Error).message || "Failed to save FAQ");
     }
   }
 
-  async function handleDelete(id) {
+  async function handleDelete(id: string) {
     if (!window.confirm("Delete this FAQ?")) return;
     setError(null);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/help/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || "Failed to delete FAQ");
+      await deleteFaq(id);
       fetchFaqs();
     } catch (e) {
-      setError(e.message);
+      setError((e as Error).message || "Failed to delete FAQ");
     }
   }
 
-  function startEdit(faq) {
+  function startEdit(faq: Faq) {
     setEditing(faq);
     setForm({ question: faq.helpQuestion, answer: faq.helpAnswer });
   }

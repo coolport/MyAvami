@@ -8,53 +8,48 @@ import {
   IconButton,
   VStack,
   HStack,
-  Spacer,
 } from "@chakra-ui/react"
-import { Toaster, toaster } from "./components/ui/toaster.jsx"
+import { Toaster, toaster } from "./components/ui/toaster"
 import { IoClose } from "react-icons/io5";
 import PageHeader from "./components/PageHeader"
+import {
+  getNotifications,
+  deleteNotification,
+} from "./services/notificationService"
+import type { Notification } from "./types"
 import styles from './styles/Notification.module.css'
 
 function Notifications() {
-  const [notifications, setNotifications] = useState([])
-  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [deleteConfirm, setDeleteConfirm] = useState<Notification | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  function handleDelete(notification) {
+  function handleDelete(notification: Notification) {
     setDeleteConfirm(notification)
     setIsDialogOpen(true)
   }
 
   async function confirmDelete() {
-    const url = `http://localhost:5555/notifications/${deleteConfirm._id}`
-    console.log("deleteConfirm: ", deleteConfirm)
-    console.log("Deleting ID:", deleteConfirm?._id)
-
+    if (!deleteConfirm) return
     try {
-      const response = await fetch(url, {
-        method: "DELETE",
+      await deleteNotification(deleteConfirm._id)
+      setDeleteConfirm(null)
+      setIsDialogOpen(false)
+      fetchNotifications()
+      toaster.create({
+        title: "Notification deleted",
+        type: "success",
+        duration: 3000,
+        closable: true,
       })
-      console.log("DELETE RESPONSE OBJ: ", response)
-
-      if (response.ok) {
-        setDeleteConfirm(null)
-        setIsDialogOpen(false)
-        getNotifications()
-        toaster.create({
-          title: "Notification deleted",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        })
-      }
     } catch (error) {
-      console.error("Delete error: ", error.message)
+      console.error("Delete error:", (error as Error).message)
       toaster.create({
         title: "Error deleting notification",
-        description: error.message,
-        status: "error",
+        description: (error as Error).message,
+        type: "error",
         duration: 5000,
-        isClosable: true,
+        closable: true,
       })
     }
   }
@@ -64,36 +59,25 @@ function Notifications() {
     setIsDialogOpen(false)
   }
 
-  async function getNotifications() {
-    const url = `${import.meta.env.VITE_API_URL}/notifications`
+  async function fetchNotifications() {
     try {
-      const response = await fetch(url)
-      const json = await response.json()
-      const notificationsJSON = json.data
-
-      const updatedArray = []
-      for (const x in notificationsJSON) {
-        updatedArray.push(notificationsJSON[x])
-      }
-
+      const data = await getNotifications()
       // Reverse the array to show latest first
-      const reversedArray = updatedArray.reverse()
-      console.log("Updated Array (latest first): ", reversedArray)
-      setNotifications(reversedArray)
+      setNotifications([...data].reverse())
     } catch (error) {
-      console.error("Server error:", error.message)
+      console.error("Server error:", (error as Error).message)
       toaster.create({
         title: "Error fetching notifications",
-        description: error.message,
-        status: "error",
+        description: (error as Error).message,
+        type: "error",
         duration: 5000,
-        isClosable: true,
+        closable: true,
       })
     }
   }
 
   // Function to get notification type class name
-  const getNotificationClassName = (type) => {
+  const getNotificationClassName = (type?: string) => {
     switch (type?.toLowerCase()) {
       case 'success':
         return 'success'
@@ -109,7 +93,7 @@ function Notifications() {
   }
 
   // Function to get badge color scheme
-  const getBadgeColorScheme = (type) => {
+  const getBadgeColorScheme = (type?: string) => {
     switch (type?.toLowerCase()) {
       case 'success':
         return 'green'
@@ -124,19 +108,8 @@ function Notifications() {
     }
   }
 
-  // Function to format date/time if available
-  const formatDate = (dateString) => {
-    if (!dateString) return ''
-    try {
-      return new Date(dateString).toLocaleString()
-    } catch {
-      return dateString
-    }
-  }
-
   useEffect(() => {
-    getNotifications()
-    console.log("getNotifications() Triggered")
+    fetchNotifications()
   }, [])
 
   return (
@@ -189,7 +162,7 @@ function Notifications() {
       <Box className={styles.container}>
         {notifications.length === 0 ? (
           <Box className={styles.emptyState}>
-            <VStack className={styles.emptyStateContent} spacing={4}>
+            <VStack className={styles.emptyStateContent}>
               <Text className={styles.emptyStateTitle} fontSize="xl" fontWeight="bold">
                 No notifications found
               </Text>
@@ -199,14 +172,14 @@ function Notifications() {
             </VStack>
           </Box>
         ) : (
-          <VStack className={styles.notificationsList} spacing={4} align="stretch">
-            {notifications.map((notification, index) => {
+          <VStack className={styles.notificationsList} align="stretch">
+            {notifications.map((notification) => {
               const notificationClass = getNotificationClassName(notification.notificationType)
               const badgeColorScheme = getBadgeColorScheme(notification.notificationType)
 
               return (
                 <Box
-                  key={notification._id || index}
+                  key={notification._id}
                   className={`${styles.notificationCard} ${styles[notificationClass]}`}
                   borderRadius="md"
                   shadow="sm"
@@ -214,8 +187,8 @@ function Notifications() {
                 >
                   {/* Header */}
                   <Box className={styles.cardHeader}>
-                    <HStack className={styles.cardHeaderContent} spacing={4}>
-                      <HStack className={styles.cardHeaderLeft} spacing={3} flex={1}>
+                    <HStack className={styles.cardHeaderContent}>
+                      <HStack className={styles.cardHeaderLeft} flex={1}>
                         <Text className={styles.cardTitle} fontWeight="semibold" fontSize="lg">
                           {notification.notificationTitle}
                         </Text>
@@ -243,13 +216,13 @@ function Notifications() {
 
                   {/* Body */}
                   <Box className={styles.cardBody}>
-                    <VStack className={styles.cardBodyContent} align="start" spacing={3}>
+                    <VStack className={styles.cardBodyContent} align="start">
                       <Text className={styles.cardMessage}>
                         {notification.notificationMessage}
                       </Text>
 
                       {notification.notificationUserInvolved && (
-                        <HStack className={styles.userInfo} spacing={2}>
+                        <HStack className={styles.userInfo}>
                           <Text className={styles.userLabel} fontWeight="medium" color="gray.600">
                             User:
                           </Text>
@@ -261,7 +234,7 @@ function Notifications() {
 
                       {notification.createdAt && (
                         <Text className={styles.timestamp} fontSize="sm" color="gray.500">
-                          {formatDate(notification.createdAt)}
+                          {new Date(notification.createdAt).toLocaleString()}
                         </Text>
                       )}
                     </VStack>

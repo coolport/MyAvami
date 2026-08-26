@@ -9,70 +9,66 @@ import {
   HStack,
   Dialog,
 } from "@chakra-ui/react"
-import { Toaster, toaster } from "./components/ui/toaster.jsx"
+import { Toaster, toaster } from "./components/ui/toaster"
 import { IoClose } from "react-icons/io5";
 import PageHeader from "./components/PageHeader"
+import { getTransactions, deleteTransaction } from "./services/userService"
+import { formatDateTime } from "./utils/format"
+import type { Transaction } from "./types"
 import styles from './styles/TransactHistory.module.css'
 
 function TransactHistory() {
-  const [transactions, setTransactions] = useState([])
-  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [deleteConfirm, setDeleteConfirm] = useState<Transaction | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   useEffect(() => {
     getTransactions()
   }, [])
 
-  async function getTransactions() {
-    const url = "http://localhost:5555/transactions"
+  async function fetchTransactions() {
     try {
-      const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`)
-      }
-      const json = await response.json()
+      const data = await getTransactions()
       // Reverse to show latest first
-      setTransactions(json.data.reverse())
+      setTransactions([...data].reverse())
     } catch (e) {
       console.error("Error fetching transactions:", e)
       toaster.create({
         title: "Error fetching transactions",
-        description: e.message,
-        status: "error",
+        description: (e as Error).message,
+        type: "error",
         duration: 5000,
-        isClosable: true,
+        closable: true,
       })
     }
   }
 
-  function handleDelete(transaction) {
+  function handleDelete(transaction: Transaction) {
     setDeleteConfirm(transaction)
     setIsDialogOpen(true)
   }
 
   async function confirmDelete() {
-    const url = `${import.meta.env.VITE_API_URL}/transactions/${deleteConfirm._id}`
+    if (!deleteConfirm) return
     try {
-      const response = await fetch(url, { method: "DELETE" })
-      if (response.ok) {
-        setDeleteConfirm(null)
-        setIsDialogOpen(false)
-        getTransactions()
-        toaster.create({
-          title: "Transaction deleted",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        })
-      }
+      await deleteTransaction(deleteConfirm._id)
+      setDeleteConfirm(null)
+      setIsDialogOpen(false)
+      fetchTransactions()
+      toaster.create({
+        title: "Transaction deleted",
+        type: "success",
+        duration: 3000,
+        closable: true,
+      })
     } catch (error) {
-      console.error("Delete error:", error.message)
+      console.error("Delete error:", (error as Error).message)
       toaster.create({
         title: "Error deleting transaction",
-        description: error.message,
-        status: "error",
+        description: (error as Error).message,
+        type: "error",
         duration: 5000,
-        isClosable: true,
+        closable: true,
       })
     }
   }
@@ -82,17 +78,7 @@ function TransactHistory() {
     setIsDialogOpen(false)
   }
 
-  function formatDate(dateString) {
-    return new Date(dateString).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  function getPaymentMethodColor(method) {
+  function getPaymentMethodColor(method?: string) {
     switch (method?.toLowerCase()) {
       case 'cash':
         return 'green';
@@ -105,8 +91,8 @@ function TransactHistory() {
     }
   }
 
-  function generateInvoice(transaction) {
-    const formattedDate = formatDate(transaction.transactionDate)
+  function generateInvoice(transaction: Transaction) {
+    const formattedDate = formatDateTime(transaction.transactionDate)
 
     const invoiceHTML = `
     <!DOCTYPE html>
@@ -165,9 +151,9 @@ function TransactHistory() {
       toaster.create({
         title: "Popup blocked",
         description: "Please allow popups to generate invoice.",
-        status: "warning",
+        type: "warning",
         duration: 5000,
-        isClosable: true,
+        closable: true,
       })
       return
     }
@@ -201,7 +187,7 @@ function TransactHistory() {
               </Text>
               {deleteConfirm && (
                 <Box className={styles.modalPreview}>
-                  <VStack className={styles.modalPreviewContent} spacing={1}>
+                  <VStack className={styles.modalPreviewContent}>
                     <Text className={styles.modalPreviewTitle}>
                       Transaction #{deleteConfirm._id.slice(-8)}
                     </Text>
@@ -209,7 +195,7 @@ function TransactHistory() {
                       Employee: {deleteConfirm.transactionEmployee}
                     </Text>
                     <Text className={styles.modalPreviewTotal}>
-                      Total: ₱{parseFloat(deleteConfirm.transactionTotal).toLocaleString()}
+                      Total: ₱{parseFloat(String(deleteConfirm.transactionTotal)).toLocaleString()}
                     </Text>
                   </VStack>
                 </Box>
@@ -237,7 +223,7 @@ function TransactHistory() {
       <Box className={styles.container}>
         {transactions.length === 0 ? (
           <Box className={styles.emptyState}>
-            <VStack className={styles.emptyStateContent} spacing={4}>
+            <VStack className={styles.emptyStateContent}>
               <Text className={styles.emptyStateTitle}>
                 No transactions found
               </Text>
@@ -248,16 +234,16 @@ function TransactHistory() {
           </Box>
         ) : (
           <Box className={styles.transactionGrid}>
-            {transactions.map((transaction, index) => (
+            {transactions.map((transaction) => (
               <Box
                 key={transaction._id}
                 className={styles.transactionCard}
               >
                 {/* Header */}
                 <Box className={styles.cardHeader}>
-                  <VStack className={styles.cardHeaderContent} align="stretch" spacing={2}>
+                  <VStack className={styles.cardHeaderContent} align="stretch">
                     <HStack className={styles.cardHeaderTop} justify="space-between" align="flex-start">
-                      <VStack className={styles.cardHeaderLeft} align="flex-start" spacing={1}>
+                      <VStack className={styles.cardHeaderLeft} align="flex-start">
                         <Text className={styles.transactionIdLabel}>
                           Transaction ID
                         </Text>
@@ -294,9 +280,9 @@ function TransactHistory() {
 
                 {/* Body */}
                 <Box className={styles.cardBody}>
-                  <VStack className={styles.cardBodyContent} align="stretch" spacing={4}>
+                  <VStack className={styles.cardBodyContent} align="stretch">
                     {/* Employee & Date Info */}
-                    <VStack className={styles.infoSection} align="stretch" spacing={2}>
+                    <VStack className={styles.infoSection} align="stretch">
                       <HStack className={styles.infoRow}>
                         <Text className={styles.infoLabel}>
                           Employee:
@@ -310,7 +296,7 @@ function TransactHistory() {
                           Date:
                         </Text>
                         <Text className={styles.infoValueDate}>
-                          {formatDate(transaction.transactionDate)}
+                          {formatDateTime(transaction.transactionDate)}
                         </Text>
                       </HStack>
                     </VStack>
@@ -322,7 +308,7 @@ function TransactHistory() {
                       <Text className={styles.itemsHeader}>
                         Items ({transaction.transactCart.length})
                       </Text>
-                      <VStack className={styles.itemsList} align="stretch" spacing={1}>
+                      <VStack className={styles.itemsList} align="stretch">
                         {transaction.transactCart.map((item, itemIndex) => (
                           <HStack key={itemIndex} className={styles.itemRow} justify="space-between">
                             <Text className={styles.itemName}>
@@ -344,7 +330,7 @@ function TransactHistory() {
                         Total
                       </Text>
                       <Text className={styles.totalAmount}>
-                        ₱{parseFloat(transaction.transactionTotal).toLocaleString()}
+                        ₱{parseFloat(String(transaction.transactionTotal)).toLocaleString()}
                       </Text>
                     </HStack>
                   </VStack>
