@@ -1,16 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
+import { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import styles from "./styles/Reports.module.css";
 import PageHeader from './components/PageHeader';
 import { exportToPDF } from './services/pdfExportTemplates';
+import { getProducts } from './services/inventoryService';
+import { getTransactions, getUsers } from './services/userService';
+import { getNotifications } from './services/notificationService';
+import type { Notification, Product, Transaction, User } from './types';
+
+type ActiveTab = 'sales' | 'inventory' | 'employee';
 
 const Reports = () => {
-  const [products, setProducts] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('sales');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('sales');
 
   // Date range state
   const [dateRange, setDateRange] = useState({
@@ -31,24 +37,17 @@ const Reports = () => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        const [productsRes, transactionsRes, usersRes, notificationsRes] = await Promise.all([
-          fetch('http://localhost:5555/products'),
-          fetch('http://localhost:5555/transactions'),
-          fetch('http://localhost:5555/users'),
-          fetch(`${import.meta.env.VITE_API_URL}/notifications`)
-        ]);
-
         const [productsData, transactionsData, usersData, notificationsData] = await Promise.all([
-          productsRes.json(),
-          transactionsRes.json(),
-          usersRes.json(),
-          notificationsRes.json()
+          getProducts(),
+          getTransactions(),
+          getUsers(),
+          getNotifications()
         ]);
 
-        setProducts(productsData.data || []);
-        setTransactions(transactionsData.data || []);
-        setUsers(usersData.data || []);
-        setNotifications(notificationsData.data || []);
+        setProducts(productsData || []);
+        setTransactions(transactionsData || []);
+        setUsers(usersData || []);
+        setNotifications(notificationsData || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -63,7 +62,6 @@ const Reports = () => {
   const getFilteredTransactions = () => {
     const startDate = new Date(dateRange.startDate);
     const endDate = new Date(dateRange.endDate);
-    // Set end date to end of day
     endDate.setHours(23, 59, 59, 999);
 
     return transactions.filter(t => {
@@ -73,7 +71,7 @@ const Reports = () => {
   };
 
   // Handle date range change
-  const handleDateRangeChange = (field, value) => {
+  const handleDateRangeChange = (field: 'startDate' | 'endDate', value: string) => {
     setDateRange(prev => ({
       ...prev,
       [field]: value
@@ -81,7 +79,7 @@ const Reports = () => {
   };
 
   // Handle preset date range selection
-  const handlePresetSelect = (days) => {
+  const handlePresetSelect = (days: number) => {
     const endDate = new Date();
     const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
 
@@ -102,8 +100,8 @@ const Reports = () => {
     const avgTransactionValue = totalTransactions > 0 ? totalSales / totalTransactions : 0;
 
     // Generate daily sales data for the selected range
-    const dailySales = [];
-    const dayDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    const dailySales: Array<{ date: string; sales: number; transactions: number }> = [];
+    const dayDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
     // If range is too large, group by weeks or months
     const groupBy = dayDiff > 90 ? 'month' : dayDiff > 30 ? 'week' : 'day';
@@ -141,7 +139,7 @@ const Reports = () => {
       }
     } else {
       // Group by month
-      const months = {};
+      const months: Record<string, { date: string; sales: number; transactions: number }> = {};
       filteredTransactions.forEach(t => {
         const date = new Date(t.createdAt);
         const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
@@ -168,7 +166,7 @@ const Reports = () => {
     };
   };
 
-  // Inventory Analytics (unchanged as it's not date-dependent for current metrics)
+  // Inventory Analytics (not date-dependent for current metrics)
   const getInventoryAnalytics = () => {
     const lowStockItems = products.filter(p => (p.itemCount || 0) < 10);
     const outOfStockItems = products.filter(p => (p.itemCount || 0) === 0);
@@ -193,7 +191,7 @@ const Reports = () => {
       acc[category].count += p.itemCount || 0;
       acc[category].value += (p.itemPrice || 0) * (p.itemCount || 0);
       return acc;
-    }, {});
+    }, {} as Record<string, { category: string; count: number; value: number }>);
 
     return {
       lowStockItems,
@@ -222,7 +220,14 @@ const Reports = () => {
         avgSale: userTransactions.length > 0 ? userSales / userTransactions.length : 0
       });
       return acc;
-    }, []);
+    }, [] as Array<{
+      name: string;
+      username: string;
+      role: string;
+      transactions: number;
+      sales: number;
+      avgSale: number;
+    }>);
 
     return {
       employeePerformance: employeePerformance.sort((a, b) => b.sales - a.sales),
@@ -341,9 +346,9 @@ const Reports = () => {
             </div>
           </div>
           <div className={styles.datePresets}>
-            {datePresets.map((preset, index) => (
+            {datePresets.map((preset) => (
               <button
-                key={index}
+                key={preset.label}
                 className={styles.presetButton}
                 onClick={() => handlePresetSelect(preset.days)}
               >
@@ -374,7 +379,7 @@ const Reports = () => {
               <div className={styles.statCard}>
                 <h3>Daily Average</h3>
                 <p className={styles.statValue}>
-                  ₱{(salesData.totalSales / Math.max(1, Math.ceil((new Date(dateRange.endDate) - new Date(dateRange.startDate)) / (1000 * 60 * 60 * 24)))).toFixed(2)}
+                  ₱{(salesData.totalSales / Math.max(1, Math.ceil((new Date(dateRange.endDate).getTime() - new Date(dateRange.startDate).getTime()) / (1000 * 60 * 60 * 24)))).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -453,7 +458,7 @@ const Reports = () => {
                     <ul>
                       {inventoryData.expiringItems.slice(0, 5).map(item => (
                         <li key={item._id}>
-                          {item.itemName} - Expires: {new Date(item.itemExpiration).toLocaleDateString()}
+                          {item.itemName} - Expires: {item.itemExpiration ? new Date(item.itemExpiration).toLocaleDateString() : ''}
                         </li>
                       ))}
                     </ul>
