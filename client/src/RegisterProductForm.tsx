@@ -1,61 +1,56 @@
-import { Box, Button, Center, Stack, Text } from "@chakra-ui/react";
+import { Box, Center, Stack, Text } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import styles from "./styles/Register.module.css";
 import logo from "./assets/logo.png";
-import PageHeader from "./components/PageHeader";
+import { getSuppliers, createProduct } from "./services/inventoryService";
+import { uploadImage } from "./services/uploadService";
 import { postNotifications } from "./services/notificationService";
+import { getImageUrl } from "./utils/format";
 
-function RegisterProductForm() {
-  const { register, handleSubmit, reset, setValue, watch } = useForm();
-  const [suppliers, setSuppliers] = useState([]);
+interface ProductFormValues {
+  productName: string;
+  productBrandName?: string;
+  productDescription: string;
+  productPrice: string;
+  productQuantity: string;
+  productCategory: string;
+  productImageUrl: string;
+  supplierId: string;
+}
+
+function RegisterProductForm({ onClose }: { onClose?: () => void }) {
+  const { register, handleSubmit, reset, setValue } = useForm<ProductFormValues>();
+  const [suppliers, setSuppliers] = useState<Awaited<ReturnType<typeof getSuppliers>>>([]);
   const [loadingSuppliers, setLoadingSuppliers] = useState(true);
-  const [supplierError, setSupplierError] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [supplierError, setSupplierError] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
-
-  // Watch the image URL field to update preview
-  const imageUrl = watch("productImageUrl");
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Fetch suppliers on component mount
   useEffect(() => {
     fetchSuppliers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Update image preview when URL changes
-  useEffect(() => {
-    if (imageUrl) {
-      setImagePreview(imageUrl);
-    }
-  }, [imageUrl]);
 
   const fetchSuppliers = async () => {
     try {
       setLoadingSuppliers(true);
-      const response = await fetch("http://localhost:5555/supplier");
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        setSuppliers(result.data);
-        setSupplierError(null);
-      } else {
-        setSupplierError("Failed to load suppliers");
-        console.error("Error fetching suppliers:", result.message);
-      }
-    } catch (error) {
-      setSupplierError("Network error while fetching suppliers");
-      console.error("Network error fetching suppliers:", error);
+      setSuppliers(await getSuppliers());
+      setSupplierError(null);
+    } catch {
+      setSupplierError("Failed to load suppliers");
     } finally {
       setLoadingSuppliers(false);
     }
   };
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type on frontend too
+    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       setUploadError('Please select a valid image file (jpg, jpeg, png, gif, webp)');
@@ -76,127 +71,57 @@ function RegisterProductForm() {
     setImagePreview(previewUrl);
 
     try {
-      const formData = new FormData();
-      formData.append('image', file);
-
-      const response = await fetch('http://localhost:5555/upload/image', {
-        method: 'POST',
-        body: formData
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        // Set the uploaded image URL in the form
-        setValue('productImageUrl', result.data.url);
-        setImagePreview(`http://localhost:5555${result.data.url}`);
-        console.log('Image uploaded successfully:', result.data);
-      } else {
-        setUploadError(result.message || 'Failed to upload image');
-        setImagePreview(null);
-        setValue('productImageUrl', '');
-      }
+      const uploaded = await uploadImage(file);
+      setValue('productImageUrl', uploaded.url);
+      setImagePreview(getImageUrl(uploaded.url));
     } catch (error) {
-      console.error('Upload error:', error);
-      setUploadError('Network error during upload');
+      setUploadError((error as Error).message || 'Network error during upload');
       setImagePreview(null);
       setValue('productImageUrl', '');
     } finally {
       setUploadingImage(false);
-      // Clean up preview URL
       URL.revokeObjectURL(previewUrl);
     }
   };
 
-  async function onSubmit(data) {
-    // Map form data to match backend schema
-    const productData = {
-      itemName: data.productName,
-      itemBrandName: data.productBrandName || "Generic Brand",
-      itemDescription: data.productDescription,
-      itemPrice: parseFloat(data.productPrice),
-      itemCount: parseInt(data.productQuantity),
-      itemCategory: data.productCategory,
-      itemImage: data.productImageUrl, // This will be the uploaded image URL
-      supplierId: data.supplierId
-    };
-
-    const url = `${import.meta.env.VITE_API_URL}/products`;
-    console.log("Product data:", productData);
-
-    // Find selected supplier details for notification
+  async function onSubmit(data: ProductFormValues) {
     const selectedSupplier = suppliers.find(s => s._id === data.supplierId);
 
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(productData)
+      await createProduct({
+        itemName: data.productName,
+        itemBrandName: data.productBrandName || "Generic Brand",
+        itemDescription: data.productDescription,
+        itemPrice: parseFloat(data.productPrice),
+        itemCount: parseInt(data.productQuantity),
+        itemCategory: data.productCategory,
+        itemImage: data.productImageUrl,
+        supplierIds: [data.supplierId],
       });
 
-      const result = await response.json();
-      console.log("Response status:", response.status);
-      console.log("Response data:", result);
+      await postNotifications({
+        type: "product_registration",
+        title: "Product Registered",
+        message: `New product "${data.productName}" registered with supplier ${selectedSupplier?.supplierName || 'Unknown'}`,
+        userInvolved: "System",
+        itemInvolved: `Product: ${data.productName}`
+      });
 
-      if (response.ok) {
-        console.log("Product registered successfully:", result);
-
-        // Send success notification
-        try {
-          await postNotifications({
-            type: "product_registration",
-            title: "Product Registered",
-            message: `New product "${data.productName}" registered with supplier ${selectedSupplier?.supplierName || 'Unknown'}`,
-            userInvolved: "System",
-            itemInvolved: `Product: ${data.productName}`
-          });
-        } catch (notificationError) {
-          console.error("Failed to send registration notification:", notificationError);
-        }
-
-        reset(); // Clear the form after successful registration
-        setImagePreview(null); // Clear image preview
-
-      } else {
-        console.error("Error response:", result);
-
-        // Send error notification
-        try {
-          await postNotifications({
-            type: "error",
-            title: "Product Registration Failed",
-            message: `Failed to register product ${data.productName}: ${result.message || 'Unknown error'}`,
-            userInvolved: "System",
-            itemInvolved: `Product Registration: ${data.productName}`
-          });
-        } catch (notificationError) {
-          console.error("Failed to send error notification:", notificationError);
-        }
-      }
-
+      reset(); // Clear the form after successful registration
+      setImagePreview(null); // Clear image preview
     } catch (error) {
-      console.error("Network error:", error.message);
-
-      // Send network error notification
-      try {
-        await postNotifications({
-          type: "error",
-          title: "Network Error",
-          message: `Failed to connect to server during product registration: ${error.message}`,
-          userInvolved: "System",
-          itemInvolved: "Product Registration"
-        });
-      } catch (notificationError) {
-        console.error("Failed to send network error notification:", notificationError);
-      }
+      await postNotifications({
+        type: "error",
+        title: "Product Registration Failed",
+        message: `Failed to register product ${data.productName}: ${(error as Error).message || 'Unknown error'}`,
+        userInvolved: "System",
+        itemInvolved: `Product Registration: ${data.productName}`
+      });
     }
   }
 
   return (
     <>
-      {/* <PageHeader /> */}
       <Center>
         <Box width={"50%"} marginTop={50} color={"black"}>
           <div className={styles.container}>
@@ -205,7 +130,7 @@ function RegisterProductForm() {
                 <img src={logo} alt="MyAvami Logo" style={{ height: "60px" }} />
               </div>
               <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-                <Stack spacing={4}>
+                <Stack>
                   <Text color="gray.700">Product Name *</Text>
                   <input
                     id="productName"

@@ -1,40 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './styles/EditUserForm.module.css'; // Reusing the same styles
+import {
+  getSuppliers,
+  updateSupplier,
+  deleteSupplier,
+} from './services/inventoryService';
+import type { Supplier } from './types';
+
+interface SupplierFormData {
+  supplierName: string;
+  supplierEmail: string;
+  supplierAddress: string;
+  supplierNumber: string;
+}
+
+const EMPTY_FORM: SupplierFormData = {
+  supplierName: '',
+  supplierEmail: '',
+  supplierAddress: '',
+  supplierNumber: ''
+};
 
 const EditSupplierForm = () => {
-  const [suppliers, setSuppliers] = useState([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
-  const [formData, setFormData] = useState({
-    supplierName: '',
-    supplierEmail: '',
-    supplierAddress: '',
-    supplierNumber: ''
-  });
+  const [formData, setFormData] = useState<SupplierFormData>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
     fetchSuppliers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchSuppliers = async () => {
-    const url = "http://localhost:5555/supplier";
     try {
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
-      const data = await response.json();
-      if (data.success) {
-        setSuppliers(data.data);
-      }
+      setSuppliers(await getSuppliers());
     } catch (error) {
       console.error('Error fetching suppliers:', error);
       setMessage('Error fetching suppliers');
     }
   };
 
-  const handleSupplierSelect = (e) => {
+  const handleSupplierSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const supplierId = e.target.value;
     setSelectedSupplierId(supplierId);
 
@@ -49,16 +57,11 @@ const EditSupplierForm = () => {
         });
       }
     } else {
-      setFormData({
-        supplierName: '',
-        supplierEmail: '',
-        supplierAddress: '',
-        supplierNumber: ''
-      });
+      setFormData(EMPTY_FORM);
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -66,9 +69,7 @@ const EditSupplierForm = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!selectedSupplierId) {
       setMessage('Please select a supplier to edit');
       return;
@@ -78,32 +79,19 @@ const EditSupplierForm = () => {
     setMessage('');
 
     try {
-      const updateData = {};
+      const updateData: Partial<SupplierFormData> = {};
       if (formData.supplierName) updateData.supplierName = formData.supplierName;
       if (formData.supplierEmail) updateData.supplierEmail = formData.supplierEmail;
       if (formData.supplierAddress) updateData.supplierAddress = formData.supplierAddress;
       if (formData.supplierNumber) updateData.supplierNumber = formData.supplierNumber;
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/supplier/${selectedSupplierId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: "include",
-        body: JSON.stringify(updateData)
-      });
+      await updateSupplier(selectedSupplierId, updateData);
 
-      const data = await response.json();
-
-      if (data.success) {
-        setMessage('Supplier updated successfully!');
-        fetchSuppliers();
-      } else {
-        setMessage(`Error: ${data.message}`);
-      }
+      setMessage('Supplier updated successfully!');
+      fetchSuppliers();
     } catch (error) {
       console.error('Error updating supplier:', error);
-      setMessage('Error updating supplier');
+      setMessage(`Error: ${(error as Error).message || 'Error updating supplier'}`);
     } finally {
       setLoading(false);
     }
@@ -123,29 +111,15 @@ const EditSupplierForm = () => {
     setMessage('');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/supplier/${selectedSupplierId}`, {
-        method: 'DELETE',
-        credentials: "include",
-      });
+      await deleteSupplier(selectedSupplierId);
 
-      const data = await response.json();
-
-      if (data.success) {
-        setMessage('Supplier deleted successfully!');
-        setSelectedSupplierId('');
-        setFormData({
-          supplierName: '',
-          supplierEmail: '',
-          supplierAddress: '',
-          supplierNumber: ''
-        });
-        fetchSuppliers();
-      } else {
-        setMessage(`Error: ${data.message}`);
-      }
+      setMessage('Supplier deleted successfully!');
+      setSelectedSupplierId('');
+      setFormData(EMPTY_FORM);
+      fetchSuppliers();
     } catch (error) {
       console.error('Error deleting supplier:', error);
-      setMessage('Error deleting supplier');
+      setMessage(`Error: ${(error as Error).message || 'Error deleting supplier'}`);
     } finally {
       setLoading(false);
     }
@@ -219,7 +193,7 @@ const EditSupplierForm = () => {
             value={formData.supplierAddress}
             onChange={handleInputChange}
             disabled={!selectedSupplierId}
-            rows="3"
+            rows={3}
             className={`${styles.input} ${!selectedSupplierId ? styles.disabled : ''}`}
           />
         </div>
@@ -234,7 +208,7 @@ const EditSupplierForm = () => {
             value={formData.supplierNumber}
             onChange={handleInputChange}
             disabled={!selectedSupplierId}
-            maxLength="12"
+            maxLength={12}
             pattern="[0-9]*"
             className={`${styles.input} ${!selectedSupplierId ? styles.disabled : ''}`}
           />

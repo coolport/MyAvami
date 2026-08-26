@@ -1,40 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './styles/EditUserForm.module.css';
+import {
+  getUsers,
+  updateUser,
+  deleteUser,
+} from './services/userService';
+import type { User, UserRole } from './types';
+
+interface UserFormData {
+  userUsername: string;
+  userFullName: string;
+  userPassword: string;
+  userRole: UserRole;
+}
+
+const EMPTY_FORM: UserFormData = {
+  userUsername: '',
+  userFullName: '',
+  userPassword: '',
+  userRole: 'employee'
+};
 
 const EditUserForm = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [formData, setFormData] = useState({
-    userUsername: '',
-    userFullName: '',
-    userPassword: '',
-    userRole: 'employee'
-  });
+  const [formData, setFormData] = useState<UserFormData>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchUsers = async () => {
-    const url = `${import.meta.env.VITE_API_URL}/users`;
     try {
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      })
-      const data = await response.json();
-      if (data.success) {
-        setUsers(data.data);
-      }
+      setUsers(await getUsers());
     } catch (error) {
       console.error('Error fetching users:', error);
       setMessage('Error fetching users');
     }
   };
 
-  const handleUserSelect = (e) => {
+  const handleUserSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const userId = e.target.value;
     setSelectedUserId(userId);
 
@@ -49,16 +57,11 @@ const EditUserForm = () => {
         });
       }
     } else {
-      setFormData({
-        userUsername: '',
-        userFullName: '',
-        userPassword: '',
-        userRole: 'employee'
-      });
+      setFormData(EMPTY_FORM);
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -66,9 +69,7 @@ const EditUserForm = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!selectedUserId) {
       setMessage('Please select a user to edit');
       return;
@@ -78,33 +79,20 @@ const EditUserForm = () => {
     setMessage('');
 
     try {
-      const updateData = {};
+      const updateData: Record<string, string> = {};
       if (formData.userUsername) updateData.userUsername = formData.userUsername;
       if (formData.userFullName) updateData.userFullName = formData.userFullName;
       if (formData.userPassword) updateData.userPassword = formData.userPassword;
       if (formData.userRole) updateData.userRole = formData.userRole;
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/${selectedUserId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: "include",
-        body: JSON.stringify(updateData)
-      });
+      await updateUser(selectedUserId, updateData);
 
-      const data = await response.json();
-
-      if (data.success) {
-        setMessage('User updated successfully!');
-        fetchUsers();
-        setFormData(prev => ({ ...prev, userPassword: '' }));
-      } else {
-        setMessage(`Error: ${data.message}`);
-      }
+      setMessage('User updated successfully!');
+      fetchUsers();
+      setFormData(prev => ({ ...prev, userPassword: '' }));
     } catch (error) {
       console.error('Error updating user:', error);
-      setMessage('Error updating user');
+      setMessage(`Error: ${(error as Error).message || 'Error updating user'}`);
     } finally {
       setLoading(false);
     }
@@ -124,29 +112,15 @@ const EditUserForm = () => {
     setMessage('');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/${selectedUserId}`, {
-        method: 'DELETE',
-        credentials: "include",
-      });
+      await deleteUser(selectedUserId);
 
-      const data = await response.json();
-
-      if (data.success) {
-        setMessage('User deleted successfully!');
-        setSelectedUserId('');
-        setFormData({
-          userUsername: '',
-          userFullName: '',
-          userPassword: '',
-          userRole: 'employee'
-        });
-        fetchUsers();
-      } else {
-        setMessage(`Error: ${data.message}`);
-      }
+      setMessage('User deleted successfully!');
+      setSelectedUserId('');
+      setFormData(EMPTY_FORM);
+      fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
-      setMessage('Error deleting user');
+      setMessage(`Error: ${(error as Error).message || 'Error deleting user'}`);
     } finally {
       setLoading(false);
     }
