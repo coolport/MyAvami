@@ -6,7 +6,7 @@ import { ThemeProvider, useTheme } from 'next-themes'
 import * as React from 'react'
 import { LuMoon, LuSun } from 'react-icons/lu'
 
-export function ColorModeProvider(props) {
+export function ColorModeProvider(props: React.ComponentProps<typeof ThemeProvider>) {
   return (
     <ThemeProvider attribute='class' disableTransitionOnChange {...props} />
   )
@@ -25,7 +25,7 @@ export function useColorMode() {
   }
 }
 
-export function useColorModeValue(light, dark) {
+export function useColorModeValue<T>(light: T, dark: T): T {
   const { colorMode } = useColorMode()
   return colorMode === 'dark' ? dark : light
 }
@@ -35,8 +35,10 @@ export function ColorModeIcon() {
   return colorMode === 'dark' ? <LuMoon /> : <LuSun />
 }
 
-export const ColorModeButton = React.forwardRef(
-  function ColorModeButton(props, ref) {
+export const ColorModeButton = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<typeof IconButton>
+>(function ColorModeButton(props, ref) {
     const { toggleColorMode } = useColorMode()
     return (
       <ClientOnly fallback={<Skeleton boxSize='8' />}>
@@ -75,7 +77,8 @@ export const LightMode = React.forwardRef(function LightMode(props, ref) {
   )
 })
 
-export const DarkMode = React.forwardRef(function DarkMode(props, ref) {
+export const DarkMode = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof Span>>(
+  function DarkMode(props, ref) {
   return (
     <Span
       color='fg'

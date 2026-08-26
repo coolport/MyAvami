@@ -1,32 +1,27 @@
 import { Flex, Button, Text, Icon, Image, Separator, HStack } from '@chakra-ui/react';
-import { FiUser, FiLogOut } from 'react-icons/fi';
+import { FiUser } from 'react-icons/fi';
 import { useNavigate } from 'react-router';
 import avamiLogoWhite from '../assets/logowhite.png';
 import { useEffect, useState } from 'react';
-import { fetchUser } from '../services/getCurrentUser';
+import { getSessionUser, logout } from '../services/authService';
 
 const DashboardHeader = () => {
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    setUserRole(fetchUser()); // e.g. 'admin' or 'employee'
+    const loadRole = async () => {
+      const user = await getSessionUser();
+      if (user) setUserRole(user.role);
+    };
+    loadRole();
   }, []);
 
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    const url = `${import.meta.env.VITE_API_URL}/logout`
     try {
-      const res = await fetch(url, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        navigate("/");
-      } else {
-        console.error("Logout failed");
-      }
+      await logout();
+      navigate("/");
     } catch (err) {
       console.error("Logout error:", err);
     }
@@ -46,10 +41,9 @@ const DashboardHeader = () => {
       color="white"
     >
       {/* Left Section */}
-      <HStack spacing={4}>
-        <HStack spacing={2}>
+      <HStack>
+        <HStack>
           <Icon as={FiUser} boxSize={6} />
-          {/* <Text fontWeight="medium">{userType}</Text> */}
           <Text fontWeight="medium" textTransform={"capitalize"}>{userRole}</Text>
         </HStack>
         <Separator orientation="vertical" height="24px" borderColor="white" />
@@ -62,14 +56,11 @@ const DashboardHeader = () => {
             color: 'white'
           }}
           size="sm"
-          leftIcon={<FiLogOut />}
           colorScheme="whiteAlpha"
         >
           Logout
         </Button>
       </HStack>
-
-      {/* Center: Empty */}
 
       {/* Right Section: Logo */}
       <Image src={avamiLogoWhite} alt="Avami Logo" height="2rem" />
