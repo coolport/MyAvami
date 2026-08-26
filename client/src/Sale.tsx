@@ -1,152 +1,115 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { FiSearch, FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiCreditCard, FiUser, FiTag, FiDollarSign } from "react-icons/fi";
+import { FiSearch, FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiCreditCard, FiUser, FiTag } from "react-icons/fi";
 import PageHeader from "./components/PageHeader";
-import { postNotifications } from "./services/notificationService"; // Adjust path as needed
-import styles from "./styles/Sale.module.css";
-import Receipt from './components/Receipt'; // Add this import
+import { postNotifications } from "./services/notificationService";
+import { getProducts, getSuppliers, updateProduct } from "./services/inventoryService";
+import { createTransaction } from "./services/userService";
+import { getSessionUser } from "./services/authService";
+import {
+  formatPrice,
+  getStockStatus,
+  getExpirationStatus,
+  getImageUrl,
+  LOW_STOCK_THRESHOLD,
+} from "./utils/format";
 
-// newest
-const fetchUser = async () => {
-  const url = "http://localhost:5555/auth/me";
-  try {
-    const res = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return data.user; // Return full user object instead of just role
-    } else {
-      console.error("Failed to fetch user");
-      return null;
-    }
-  } catch (err) {
-    console.error("Error fetching user:", err);
-    return null;
-  }
-};
+// Sale pages render a friendlier fallback for products without an expiration date.
+function formatExpirationDate(dateString: string | undefined) {
+  if (!dateString) return "No expiration";
+  return new Date(dateString).toLocaleDateString("en-PH");
+}
+import type { Product, SessionUser } from "./types";
+import styles from "./styles/Sale.module.css";
+import Receipt from './components/Receipt';
+
+interface CartItem extends Product {
+  quantity: number;
+}
+
+interface CheckoutFormValues {
+  transactionEmployee: string;
+  transactionPaymentMethod: string;
+  transactionSeniorPwdDiscount?: boolean;
+  transactionAmountPaid: number | string;
+}
+
+interface ReceiptData {
+  transactionEmployee: string;
+  transactCart: Array<{
+    transactionCartItemName: string;
+    transactionCartItemID: string;
+    transactionCartItemCount: number;
+    transactionCartItemPrice?: number;
+  }>;
+  transactionSubtotal: number;
+  transactionVAT: number;
+  transactionDiscount: boolean;
+  transactionTotal: number;
+  transactionAmountPaid: number;
+  transactionSeniorPwdDiscount: boolean;
+  transactionPaymentMethod: string;
+  transactionId: string;
+  transactionDate: string;
+}
+
+const VAT_RATE = 0.12;
+const SENIOR_PWD_DISCOUNT_RATE = 0.2;
 
 const Sale = () => {
-  const [products, setProducts] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
-  const [cart, setCart] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [toast, setToast] = useState<{ message: string; type: string } | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
-  const [lastTransaction, setLastTransaction] = useState(null);
+  const [lastTransaction, setLastTransaction] = useState<ReceiptData | null>(null);
 
-  const checkoutForm = useForm();
+  const checkoutForm = useForm<CheckoutFormValues>();
 
   useEffect(() => {
     fetchSuppliers().then(() => {
       fetchProducts();
     });
     getCurrentUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getCurrentUser = async () => {
-    const user = await fetchUser();
-    setCurrentUser(user);
+    setCurrentUser(await getSessionUser());
   };
 
-  const showToast = (message, type = 'success') => {
+  const showToast = (message: string, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
   async function fetchSuppliers() {
     try {
-      const response = await fetch("http://localhost:5555/supplier", {
-        method: "GET",
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
-      }
-      const json = await response.json();
-      if (json.success && json.data) {
-        setSuppliers(json.data);
-      }
+      await getSuppliers();
     } catch (e) {
       console.error("Failed to fetch suppliers:", e);
     }
   }
 
-  const handleReceiptPrint = () => {
-    // Optional: Add any additional logic after printing
-    console.log("Receipt printed");
-  };
   async function fetchProducts() {
     setLoading(true);
     try {
-      const url = "http://localhost:5555/products";
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
-      }
-
-      const json = await response.json();
-      const data = json.data;
-      const updatedArray = [];
-
-      for (const x in data) {
-        const item = data[x];
-
-        // Handle both populated and non-populated supplier data
-        let supplierName = 'Unknown Supplier';
-        let actualSupplierId = item.supplierId;
-
-        if (typeof item.supplierId === 'object' && item.supplierId !== null) {
-          // Supplier is populated (object)
-          supplierName = item.supplierId.supplierName || 'Unknown Supplier';
-          actualSupplierId = item.supplierId._id;
-        } else if (typeof item.supplierId === 'string') {
-          // Supplier is not populated (just ID)
-          const supplier = suppliers.find(s => s._id === item.supplierId);
-          supplierName = supplier ? supplier.supplierName : 'Unknown Supplier';
-          actualSupplierId = item.supplierId;
-        }
-
-        const itemWithSupplier = {
-          ...item,
-          supplierName: supplierName,
-          supplierId: actualSupplierId
-        };
-        updatedArray.push(itemWithSupplier);
-      }
-      setProducts(updatedArray);
+      setProducts(await getProducts());
     } catch (error) {
-      console.error(error.message);
+      console.error((error as Error).message);
       showToast("Failed to fetch products", "error");
     } finally {
       setLoading(false);
     }
   }
 
-  const updateProductStock = async (productId, newStock) => {
+  const updateProductStock = async (productId: string, newStock: number) => {
     try {
-      const response = await fetch(`http://localhost:5555/products/${productId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ itemCount: newStock }),
-      });
+      await updateProduct(productId, { itemCount: newStock });
 
-      if (!response.ok) {
-        throw new Error(`Failed to update stock: ${response.status}`);
-      }
-
-      // Update local products state
       setProducts(prevProducts =>
         prevProducts.map(product =>
           product._id === productId
@@ -162,9 +125,8 @@ const Sale = () => {
     }
   };
 
-  const checkAndNotifyStockLevels = async (productId, productName, newStock) => {
+  const checkAndNotifyStockLevels = async (productId: string, productName: string, newStock: number) => {
     try {
-      // Check if stock is at zero (out of stock)
       if (newStock === 0) {
         await postNotifications({
           type: "stock_alert",
@@ -173,9 +135,7 @@ const Sale = () => {
           userInvolved: "System",
           itemInvolved: productName
         });
-      }
-      // Check if stock is low (10 or below, but not zero)
-      else if (newStock <= 10) {
+      } else if (newStock <= LOW_STOCK_THRESHOLD) {
         await postNotifications({
           type: "stock_alert",
           title: "Low Stock Alert",
@@ -189,7 +149,7 @@ const Sale = () => {
     }
   };
 
-  const addToCart = (product) => {
+  const addToCart = (product: Product) => {
     if (product.itemCount === 0) {
       showToast("This item is out of stock", "error");
       return;
@@ -214,14 +174,16 @@ const Sale = () => {
     showToast(`${product.itemName} added to cart`);
   };
 
-  const removeFromCart = (id) => {
+  const removeFromCart = (id: string) => {
     const item = cart.find(item => item._id === id);
+    if (!item) return;
     setCart(cart.filter((item) => item._id !== id));
     showToast(`${item.itemName} removed from cart`);
   };
 
-  const updateQuantity = (id, delta) => {
+  const updateQuantity = (id: string, delta: number) => {
     const item = cart.find(item => item._id === id);
+    if (!item) return;
     const newQuantity = item.quantity + delta;
 
     if (newQuantity > item.itemCount) {
@@ -243,10 +205,10 @@ const Sale = () => {
     );
   };
 
-  // New function to handle direct quantity input
-  const updateQuantityDirect = (id, newQuantity) => {
+  const updateQuantityDirect = (id: string, newQuantity: string | number) => {
     const item = cart.find(item => item._id === id);
-    const quantity = parseInt(newQuantity) || 1;
+    if (!item) return;
+    const quantity = parseInt(String(newQuantity)) || 1;
 
     if (quantity > item.itemCount) {
       showToast("Cannot exceed available stock", "error");
@@ -261,7 +223,7 @@ const Sale = () => {
     setCart(
       cart.map((item) =>
         item._id === id
-          ? { ...item, quantity: quantity }
+          ? { ...item, quantity }
           : item
       )
     );
@@ -272,23 +234,21 @@ const Sale = () => {
     0
   );
 
-  // Calculate VAT and total with Philippine tax system - FIXED
+  // Senior/PWD customers get a 20% discount and are VAT-exempt; regular sales add 12% VAT.
   const calculateTaxAndTotal = () => {
     const isSeniorPwd = checkoutForm.watch("transactionSeniorPwdDiscount");
 
-    // If Senior/PWD, apply 20% discount to subtotal and no VAT
     if (isSeniorPwd) {
-      const discountedSubtotal = subtotal * 0.8; // 20% discount
+      const discountedSubtotal = subtotal * (1 - SENIOR_PWD_DISCOUNT_RATE);
       return {
         subtotal,
-        discount: subtotal * 0.2,
+        discount: subtotal * SENIOR_PWD_DISCOUNT_RATE,
         vat: 0,
         total: discountedSubtotal
       };
     }
 
-    // Regular customer: apply 12% VAT
-    const vat = subtotal * 0.12;
+    const vat = subtotal * VAT_RATE;
     const total = subtotal + vat;
 
     return {
@@ -312,21 +272,19 @@ const Sale = () => {
     }
     setShowCheckout(true);
     checkoutForm.reset({
-      transactionEmployee: currentUser.username || currentUser.email || 'Unknown User',
+      transactionEmployee: currentUser.username || 'Unknown User',
       transactionPaymentMethod: 'cash',
-      transactionSeniorPwdDiscount: false, // Explicitly set to false
+      transactionSeniorPwdDiscount: false,
       transactionAmountPaid: ''
     });
   };
 
-  const onCheckoutSubmit = async (data) => {
-    // Convert checkbox to boolean explicitly
+  const onCheckoutSubmit = async (data: CheckoutFormValues) => {
     const seniorPwdDiscount = Boolean(data.transactionSeniorPwdDiscount);
 
-    const { total: finalTotal, vat, discount } = calculateTaxAndTotal();
-    const amountPaid = parseFloat(data.transactionAmountPaid) || 0;
+    const { total: finalTotal, vat } = calculateTaxAndTotal();
+    const amountPaid = parseFloat(String(data.transactionAmountPaid)) || 0;
 
-    // Validate amount paid
     if (amountPaid < finalTotal) {
       showToast("Amount paid cannot be less than the total", "error");
       return;
@@ -342,7 +300,7 @@ const Sale = () => {
       })),
       transactionSubtotal: subtotal,
       transactionVAT: vat,
-      transactionDiscount: seniorPwdDiscount, // Boolean flag only
+      transactionDiscount: seniorPwdDiscount,
       transactionTotal: finalTotal,
       transactionAmountPaid: amountPaid,
       transactionSeniorPwdDiscount: seniorPwdDiscount,
@@ -350,68 +308,58 @@ const Sale = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:5555/transactions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(transactionData),
+      const transactionResult = await createTransaction({
+        transactionEmployee: transactionData.transactionEmployee,
+        transactCart: transactionData.transactCart,
+        transactionDiscount: seniorPwdDiscount,
+        transactionTotal: finalTotal,
+        transactionAmountPaid: amountPaid,
+        transactionPaymentMethod: data.transactionPaymentMethod
       });
 
-      if (response.ok) {
-        const transactionResult = await response.json();
+      // Send notification about the completed transaction
+      try {
+        const customerType = data.transactionSeniorPwdDiscount ? " (Senior/PWD)" : "";
+        await postNotifications({
+          type: "sale",
+          title: "Transaction Completed",
+          message: `Sale completed by ${data.transactionEmployee}${customerType}. Total: ${formatPrice(finalTotal)}. Payment: ${data.transactionPaymentMethod}`,
+          userInvolved: data.transactionEmployee,
+          itemInvolved: cart.map(item => `${item.itemName} (${item.quantity})`).join(", ")
+        });
+      } catch (notificationError) {
+        console.error("Failed to send notification:", notificationError);
+        // Don't block the transaction if notification fails
+      }
 
-        // Send notification about the completed transaction
-        try {
-          const customerType = data.transactionSeniorPwdDiscount ? " (Senior/PWD)" : "";
-          await postNotifications({
-            type: "sale",
-            title: "Transaction Completed",
-            message: `Sale completed by ${data.transactionEmployee}${customerType}. Total: ${formatPrice(finalTotal)}. Payment: ${data.transactionPaymentMethod}`,
-            userInvolved: data.transactionEmployee,
-            itemInvolved: cart.map(item => `${item.itemName} (${item.quantity})`).join(", ")
-          });
-        } catch (notificationError) {
-          console.error("Failed to send notification:", notificationError);
-          // Don't block the transaction if notification fails
-        }
+      // Update stock for each item in the cart
+      for (const item of cart) {
+        const currentProduct = products.find(p => p._id === item._id);
+        if (currentProduct) {
+          const newStock = currentProduct.itemCount - item.quantity;
+          const stockUpdated = await updateProductStock(item._id, newStock);
 
-        // Update stock for each item in the cart
-        for (const item of cart) {
-          const currentProduct = products.find(p => p._id === item._id);
-          if (currentProduct) {
-            const newStock = currentProduct.itemCount - item.quantity;
-            const stockUpdated = await updateProductStock(item._id, newStock);
-
-            if (stockUpdated) {
-              // Check and notify about stock levels after update
-              await checkAndNotifyStockLevels(item._id, item.itemName, newStock);
-            }
+          if (stockUpdated) {
+            await checkAndNotifyStockLevels(item._id, item.itemName, newStock);
           }
         }
-
-        // Prepare transaction data for receipt
-        const receiptData = {
-          ...transactionData,
-          transactionId: transactionResult.data?._id || 'N/A',
-          transactionDate: new Date().toISOString()
-        };
-
-        // Store transaction data and show receipt
-        setLastTransaction(receiptData);
-        setShowCheckout(false);
-        setShowReceipt(true);
-
-        // Clear cart and form
-        setCart([]);
-        checkoutForm.reset();
-        showToast("Transaction completed successfully!");
-      } else {
-        throw new Error("Failed to process transaction");
       }
+
+      // Prepare transaction data for receipt
+      setLastTransaction({
+        ...transactionData,
+        transactionId: transactionResult?._id || 'N/A',
+        transactionDate: new Date().toISOString()
+      });
+      setShowCheckout(false);
+      setShowReceipt(true);
+
+      // Clear cart and form
+      setCart([]);
+      checkoutForm.reset();
+      showToast("Transaction completed successfully!");
     } catch (error) {
-      console.error("Transaction error:", error.message);
+      console.error("Transaction error:", (error as Error).message);
       showToast("Failed to process transaction", "error");
     }
   };
@@ -419,69 +367,15 @@ const Sale = () => {
   const handleReceiptClose = () => {
     setShowReceipt(false);
     setLastTransaction(null);
-    console.log("Receipt printed");
-  };
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP'
-    }).format(price);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'No expiration';
-    return new Date(dateString).toLocaleDateString('en-PH');
-  };
-
-  const getStockStatus = (count) => {
-    if (count === 0) return { label: 'Out of Stock', color: '#e53e3e' };
-    if (count <= 10) return { label: 'Low Stock', color: '#dd6b20' };
-    return { label: 'In Stock', color: '#38a169' };
-  };
-
-  const getExpirationStatus = (dateString) => {
-    if (!dateString) return { color: '#718096', isExpired: false, isNearExpiry: false };
-
-    const expirationDate = new Date(dateString);
-    const today = new Date();
-    const daysDiff = Math.ceil((expirationDate - today) / (1000 * 60 * 60 * 24));
-
-    if (daysDiff < 0) {
-      return { color: '#e53e3e', isExpired: true, isNearExpiry: false }; // Expired - red
-    } else if (daysDiff <= 7) {
-      return { color: '#dd6b20', isExpired: false, isNearExpiry: true }; // Near expiry - orange
-    } else if (daysDiff <= 30) {
-      return { color: '#ecc94b', isExpired: false, isNearExpiry: true }; // Close to expiry - yellow
-    }
-    return { color: '#38a169', isExpired: false, isNearExpiry: false }; // Fresh - green
   };
 
   const calculateChange = () => {
-    const amountPaid = parseFloat(checkoutForm.watch("transactionAmountPaid") || 0);
+    const amountPaid = parseFloat(checkoutForm.watch("transactionAmountPaid") as unknown as string) || 0;
     const { total: finalTotal } = calculateTaxAndTotal();
     return Math.max(0, amountPaid - finalTotal);
   };
 
   const { subtotal: displaySubtotal, vat, discount, total } = calculateTaxAndTotal();
-
-  // Improved image URL handling
-  const getImageUrl = (imageUrl) => {
-    if (!imageUrl) return "https://via.placeholder.com/200x150?text=No+Image";
-
-    // If it's already a full URL, return as is
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl;
-    }
-
-    // If it's a relative path starting with /, prepend the server URL
-    if (imageUrl.startsWith('/')) {
-      return `http://localhost:5555${imageUrl}`;
-    }
-
-    // If it doesn't start with /, add the leading slash
-    return `${import.meta.env.VITE_API_URL}/${imageUrl}`;
-  };
 
   return (
     <>
@@ -524,11 +418,11 @@ const Sale = () => {
                 return (
                   <div key={product._id} className={styles.productCard}>
                     <img
-                      src={getImageUrl(product.itemImage)}
+                      src={getImageUrl(product.itemImage, "large")}
                       alt={product.itemName}
                       className={styles.productImage}
                       onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/200x150?text=No+Image";
+                        e.currentTarget.src = "https://via.placeholder.com/200x150?text=No+Image";
                       }}
                     />
                     <h3 className={styles.productName}>
@@ -543,7 +437,7 @@ const Sale = () => {
                     >
                       {expirationStatus.isExpired ? '⚠️ EXPIRED: ' :
                         expirationStatus.isNearExpiry ? '⏰ Expires: ' : 'Expires: '}
-                      {formatDate(product.itemExpiration)}
+                      {formatExpirationDate(product.itemExpiration)}
                     </p>
                     {product.itemBrandName && (
                       <p className={styles.productBrand}>
@@ -603,7 +497,7 @@ const Sale = () => {
                         </p>
                       )}
                       <p className={styles.cartItemExpiration}>
-                        Expires: {formatDate(item.itemExpiration)}
+                        Expires: {formatExpirationDate(item.itemExpiration)}
                       </p>
                       <p className={styles.cartItemPrice}>
                         {formatPrice(item.itemPrice)} each
@@ -767,13 +661,13 @@ const Sale = () => {
                   placeholder="Enter amount paid"
                   className={styles.input}
                 />
-                {checkoutForm.watch("transactionAmountPaid") && (
+                {checkoutForm.watch("transactionAmountPaid") ? (
                   <div className={styles.changeIndicator}>
                     <p className={styles.changeText}>
                       Change: {formatPrice(calculateChange())}
                     </p>
                   </div>
-                )}
+                ) : null}
               </div>
 
               <div className={styles.orderSummary}>
@@ -830,14 +724,13 @@ const Sale = () => {
             </form>
           </div>
         </div>
-
       )}
+
       {/* Receipt Modal */}
       {showReceipt && lastTransaction && (
         <Receipt
           transactionData={lastTransaction}
           onClose={handleReceiptClose}
-          onPrint={handleReceiptPrint}
         />
       )}
     </>

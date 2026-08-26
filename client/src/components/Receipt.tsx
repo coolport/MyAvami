@@ -1,12 +1,37 @@
-import React from 'react';
 import { FiPrinter, FiX } from 'react-icons/fi';
 import styles from '../styles/Receipt.module.css';
+import { formatPrice } from '../utils/format';
 
-const Receipt = ({
-  transactionData,
-  onClose,
-  onPrint
-}) => {
+interface ReceiptCartItem {
+  transactionCartItemName: string;
+  transactionCartItemID?: string;
+  transactionCartItemCount: number;
+  transactionCartItemPrice?: number;
+}
+
+export interface ReceiptData {
+  transactionEmployee: string;
+  transactCart: ReceiptCartItem[];
+  transactionSubtotal?: number;
+  transactionVAT?: number;
+  transactionDiscount: boolean | number;
+  transactionTotal: number;
+  transactionAmountPaid: number;
+  transactionSeniorPwdDiscount?: boolean;
+  transactionPaymentMethod: string;
+  transactionDate?: string;
+  transactionId?: string;
+}
+
+interface ReceiptProps {
+  transactionData: ReceiptData;
+  onClose: () => void;
+  onPrint?: () => void;
+}
+
+const SENIOR_PWD_DISCOUNT_RATE = 0.2;
+
+const Receipt = ({ transactionData, onClose, onPrint }: ReceiptProps) => {
   const {
     transactionEmployee,
     transactCart,
@@ -21,14 +46,7 @@ const Receipt = ({
     transactionId
   } = transactionData;
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP'
-    }).format(price);
-  };
-
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-PH', {
       year: 'numeric',
       month: '2-digit',
@@ -46,6 +64,8 @@ const Receipt = ({
   const handlePrint = () => {
     // Create a new window for printing
     const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
     const receiptHTML = `
       <!DOCTYPE html>
       <html>
@@ -141,59 +161,59 @@ const Receipt = ({
             <div class="store-info">City, Province 1234</div>
             <div class="store-info">Tel: (02) 123-4567</div>
           </div>
-          
+
           <div class="transaction-info">
             <div>Receipt #: ${transactionId || 'N/A'}</div>
-            <div>Date: ${formatDate(transactionDate || new Date())}</div>
+            <div>Date: ${formatDate(transactionDate || new Date().toISOString())}</div>
             <div>Cashier: ${transactionEmployee}</div>
             <div>Payment: ${transactionPaymentMethod.toUpperCase()}</div>
           </div>
-          
+
           <div class="items">
             ${transactCart.map(item => `
               <div class="item">
                 <div class="item-name">${item.transactionCartItemName}</div>
-                <div class="item-qty-price">${item.transactionCartItemCount} x ${formatPrice(item.transactionCartItemPrice || 0)}</div>
+                <div class="item-qty-price">${item.transactionCartItemCount} x ${formatPrice(item.transactionCartItemPrice)}</div>
               </div>
             `).join('')}
           </div>
-          
+
           <div class="totals">
             <div class="total-row">
               <span>Subtotal:</span>
               <span>${formatPrice(transactionSubtotal)}</span>
             </div>
-            
-            ${transactionDiscount > 0 ? `
+
+            ${Number(transactionDiscount) > 0 ? `
               <div class="total-row discount-note">
                 <span>Senior/PWD Discount (20%):</span>
-                <span>-${formatPrice(transactionDiscount)}</span>
+                <span>-${formatPrice(Number(transactionDiscount))}</span>
               </div>
             ` : ''}
-            
-            ${transactionVAT > 0 ? `
+
+            ${Number(transactionVAT) > 0 ? `
               <div class="total-row">
                 <span>VAT (12%):</span>
                 <span>${formatPrice(transactionVAT)}</span>
               </div>
             ` : ''}
-            
+
             <div class="total-row final">
               <span>TOTAL:</span>
               <span>${formatPrice(transactionTotal)}</span>
             </div>
-            
+
             <div class="total-row">
               <span>Amount Paid:</span>
               <span>${formatPrice(transactionAmountPaid)}</span>
             </div>
-            
+
             <div class="total-row">
               <span>Change:</span>
               <span>${formatPrice(calculateChange())}</span>
             </div>
           </div>
-          
+
           <div class="footer">
             <div>Thank you for your purchase!</div>
             <div>Please keep this receipt for your records</div>
@@ -210,10 +230,9 @@ const Receipt = ({
     printWindow.print();
     printWindow.close();
 
-    // Call the onPrint callback if provided
     if (onPrint) onPrint();
   };
-  const expectedDiscount = transactionSeniorPwdDiscount ? transactionSubtotal * 0.20 : 0;
+  const expectedDiscount = transactionSeniorPwdDiscount ? Number(transactionSubtotal) * SENIOR_PWD_DISCOUNT_RATE : 0;
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
@@ -242,7 +261,7 @@ const Receipt = ({
             </div>
             <div className={styles.infoRow}>
               <span>Date:</span>
-              <span>{formatDate(transactionDate || new Date())}</span>
+              <span>{formatDate(transactionDate || new Date().toISOString())}</span>
             </div>
             <div className={styles.infoRow}>
               <span>Cashier:</span>
@@ -261,7 +280,7 @@ const Receipt = ({
                   {item.transactionCartItemName}
                 </div>
                 <div className={styles.itemQtyPrice}>
-                  {item.transactionCartItemCount} x {formatPrice(item.transactionCartItemPrice || 0)}
+                  {item.transactionCartItemCount} x {formatPrice(item.transactionCartItemPrice)}
                 </div>
               </div>
             ))}
@@ -273,14 +292,14 @@ const Receipt = ({
               <span>{formatPrice(transactionSubtotal)}</span>
             </div>
 
-            {transactionDiscount > 0 && (
+            {Number(transactionDiscount) > 0 && (
               <div className={styles.totalRow} style={{ color: '#38a169' }}>
                 <span>Senior/PWD Discount (20%):</span>
                 <span>-{formatPrice(expectedDiscount)}</span>
               </div>
             )}
 
-            {transactionVAT > 0 && (
+            {Number(transactionVAT) > 0 && (
               <div className={styles.totalRow}>
                 <span>VAT (12%):</span>
                 <span>{formatPrice(transactionVAT)}</span>

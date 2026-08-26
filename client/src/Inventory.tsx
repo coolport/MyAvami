@@ -3,48 +3,98 @@ import { useForm } from "react-hook-form"
 import { FiSearch, FiEdit2, FiTrash2, FiX, FiArrowUp, FiArrowDown, FiRefreshCw } from "react-icons/fi"
 import PageHeader from "./components/PageHeader"
 import { printReorderForm } from "./services/reorderTemplate"
+import {
+  getProducts,
+  getSuppliers,
+  updateProduct,
+  deleteProduct,
+} from "./services/inventoryService"
+import { getTransactions } from "./services/userService"
+import { uploadImage } from "./services/uploadService"
+import {
+  formatPrice,
+  formatDate,
+  getStockStatus,
+  getImageUrl,
+  LOW_STOCK_THRESHOLD,
+} from "./utils/format"
+import type { Product, Supplier, Transaction } from "./types"
 import styles from "./styles/Inventory.module.css"
 
+interface InventoryItem extends Product {
+  supplierNames: string[]
+  /** First resolved supplier name (backward-compatible single-supplier field). */
+  supplierName: string
+  movement: 'Fast Moving' | 'Slow Moving'
+}
+
+interface EditFormValues {
+  itemName: string
+  itemBrandName: string
+  itemDescription: string
+  itemPrice: number | string
+  itemCount: number | string
+  itemCategory: string
+  itemExpiration?: string
+  itemImage: string
+  supplierIds: string[]
+}
+
+interface SortConfig {
+  key: SortKey | null
+  direction: 'asc' | 'desc'
+}
+
+type SortKey =
+  | 'itemName'
+  | 'itemBrandName'
+  | 'itemPrice'
+  | 'itemCount'
+  | 'itemCategory'
+  | 'itemExpiration'
+  | 'supplierName'
+  | 'movement'
+
+const MOVEMENT_SALES_THRESHOLD = 5 // sales in the past 24 hours
+
 function Inventory() {
-  const [inventory, setInventory] = useState([])
-  const [filteredInventory, setFilteredInventory] = useState([])
-  const [suppliers, setSuppliers] = useState([])
-  const [transactions, setTransactions] = useState([])
-  const [editingItem, setEditingItem] = useState(null)
-  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([])
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<InventoryItem | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(false)
-  const [toast, setToast] = useState(null)
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
+  const [toast, setToast] = useState<{ message: string; type: string } | null>(null)
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'asc' })
 
-  // New states for file upload in edit modal
-  const [editImagePreview, setEditImagePreview] = useState(null)
+  // File upload state for the edit modal
+  const [editImagePreview, setEditImagePreview] = useState<string | null>(null)
   const [uploadingEditImage, setUploadingEditImage] = useState(false)
-  const [editUploadError, setEditUploadError] = useState(null)
+  const [editUploadError, setEditUploadError] = useState<string | null>(null)
 
-  const editForm = useForm()
+  const editForm = useForm<EditFormValues>()
 
   useEffect(() => {
-    console.log('Loading suppliers and transactions...')
-
     const loadBaseData = async () => {
       try {
         await fetchSuppliers()
         await fetchTransactions()
-        console.log('Base data loaded successfully')
       } catch (error) {
         console.error('Error loading base data:', error)
       }
     }
 
     loadBaseData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     if (suppliers.length > 0 && transactions.length > 0) {
-      console.log('Base data ready, loading items...')
       getItems()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suppliers, transactions])
 
   // Filter inventory based on search term
@@ -57,9 +107,8 @@ function Inventory() {
     }
   }, [inventory, searchTerm])
 
-  // Linear Search Algorithm
-  function linearSearch(array, searchTerm) {
-    const results = []
+  function linearSearch(array: InventoryItem[], searchTerm: string) {
+    const results: InventoryItem[] = []
     const lowerSearchTerm = searchTerm.toLowerCase()
 
     for (let i = 0; i < array.length; i++) {
@@ -68,7 +117,7 @@ function Inventory() {
       const brandMatch = item.itemBrandName ? item.itemBrandName.toLowerCase().includes(lowerSearchTerm) : false
       const descMatch = item.itemDescription.toLowerCase().includes(lowerSearchTerm)
       const categoryMatch = item.itemCategory.toLowerCase().includes(lowerSearchTerm)
-      const supplierMatch = item.supplierName ? item.supplierName.toLowerCase().includes(lowerSearchTerm) : false
+      const supplierMatch = item.supplierName.toLowerCase().includes(lowerSearchTerm)
 
       if (nameMatch || brandMatch || descMatch || categoryMatch || supplierMatch) {
         results.push(item)
@@ -78,167 +127,87 @@ function Inventory() {
     return results
   }
 
-  // Merge Sort Algorithm 
-  function mergeSort(array, sortKey) {
-    if (array.length <= 1) {
-      return array
-    }
-
-    const middle = Math.floor(array.length / 2)
-    const left = array.slice(0, middle)
-    const right = array.slice(middle)
-
-    const sortedLeft = mergeSort(left, sortKey)
-    const sortedRight = mergeSort(right, sortKey)
-
-    return merge(sortedLeft, sortedRight, sortKey)
-  }
-
-  function merge(left, right, sortKey) {
-    const result = []
-    let leftIndex = 0
-    let rightIndex = 0
-
-    while (leftIndex < left.length && rightIndex < right.length) {
-      const leftValue = getValueForSort(left[leftIndex], sortKey)
-      const rightValue = getValueForSort(right[rightIndex], sortKey)
-
-      if (sortConfig.direction === 'asc' ? leftValue <= rightValue : leftValue >= rightValue) {
-        result.push(left[leftIndex])
-        leftIndex++
-      } else {
-        result.push(right[rightIndex])
-        rightIndex++
-      }
-    }
-
-    while (leftIndex < left.length) {
-      result.push(left[leftIndex])
-      leftIndex++
-    }
-
-    while (rightIndex < right.length) {
-      result.push(right[rightIndex])
-      rightIndex++
-    }
-
-    return result
-  }
-
-  function getValueForSort(item, key) {
+  function getValueForSort(item: InventoryItem, key: SortKey): string | number {
     switch (key) {
       case 'itemName':
         return item.itemName.toLowerCase()
       case 'itemBrandName':
         return (item.itemBrandName || '').toLowerCase()
       case 'itemPrice':
-        return parseFloat(item.itemPrice) || 0
+        return parseFloat(String(item.itemPrice)) || 0
       case 'itemCount':
-        return parseInt(item.itemCount) || 0
+        return parseInt(String(item.itemCount)) || 0
       case 'itemCategory':
         return item.itemCategory.toLowerCase()
       case 'itemExpiration':
         return item.itemExpiration ? new Date(item.itemExpiration).getTime() : 0
       case 'supplierName':
-        return (item.supplierName || '').toLowerCase()
+        return item.supplierName.toLowerCase()
       case 'movement':
         return item.movement === 'Fast Moving' ? 1 : 0
-      default:
-        return item[key] || ''
     }
   }
 
-  function handleSort(key) {
-    let direction = 'asc'
+  function handleSort(key: SortKey) {
+    let direction: 'asc' | 'desc' = 'asc'
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc'
     }
 
     setSortConfig({ key, direction })
 
-    const sorted = mergeSort([...filteredInventory], key)
+    const sorted = [...filteredInventory].sort((a, b) => {
+      const leftValue = getValueForSort(a, key)
+      const rightValue = getValueForSort(b, key)
+
+      if (leftValue === rightValue) return 0
+
+      const result = leftValue < rightValue ? -1 : 1
+      return direction === 'asc' ? result : -result
+    })
     setFilteredInventory(sorted)
   }
 
-  const showToast = (message, type = 'success') => {
+  const showToast = (message: string, type = 'success') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 3000)
   }
 
-  // Fetch transactions for movement calculation
   async function fetchTransactions() {
     try {
-      const response = await fetch("http://localhost:5555/transactions", {
-        method: "GET",
-        credentials: "include",
-      })
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`)
-      }
-      const json = await response.json()
-      if (json.data) {
-        setTransactions(json.data)
-      }
+      setTransactions(await getTransactions())
     } catch (e) {
       console.error("Failed to fetch transactions:", e)
     }
   }
 
-
-  // Calculate item movement based on sales in past 24 hours
-  function calculateItemMovement(itemName) {
+  // Calculate item movement based on sales in the past 24 hours
+  function calculateItemMovement(itemName: string): 'Fast Moving' | 'Slow Moving' {
     const now = new Date()
-    // Fix: Actually use 24 hours (1 day), not 30 days
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-
-    console.log(`Calculating movement for: ${itemName}`)
-    console.log(`Time range: ${oneDayAgo.toISOString()} to ${now.toISOString()}`)
-    console.log(`Total transactions available: ${transactions.length}`)
 
     let totalSales = 0
 
-    // Filter transactions from the past 24 hours
-    const recentTransactions = transactions.filter(transaction => {
+    transactions.forEach(transaction => {
       const transactionDate = new Date(transaction.transactionDate)
       const isInRange = transactionDate >= oneDayAgo && transactionDate <= now
+      if (!isInRange) return
 
-      if (isInRange) {
-        console.log(`Recent transaction found: ${transaction._id} at ${transactionDate.toISOString()}`)
-      }
-
-      return isInRange
+      transaction.transactCart?.forEach(cartItem => {
+        if (cartItem.transactionCartItemName === itemName) {
+          totalSales += parseInt(String(cartItem.transactionCartItemCount)) || 0
+        }
+      })
     })
 
-    console.log(`Recent transactions found: ${recentTransactions.length}`)
-
-    // Count sales for this specific item
-    recentTransactions.forEach(transaction => {
-      if (transaction.transactCart && Array.isArray(transaction.transactCart)) {
-        transaction.transactCart.forEach(cartItem => {
-          if (cartItem.transactionCartItemName === itemName) {
-            const itemCount = parseInt(cartItem.transactionCartItemCount) || 0
-            totalSales += itemCount
-            console.log(`Found sale: ${itemName} x${itemCount} in transaction ${transaction._id}`)
-          }
-        })
-      }
-    })
-
-    console.log(`Total sales for ${itemName}: ${totalSales}`)
-    const movement = totalSales >= 5 ? 'Fast Moving' : 'Slow Moving'
-    console.log(`Movement status: ${movement}`)
-
-    return movement
+    return totalSales >= MOVEMENT_SALES_THRESHOLD ? 'Fast Moving' : 'Slow Moving'
   }
 
   const refreshMovements = async () => {
-    console.log('Refreshing movement calculations...')
     setLoading(true)
 
     try {
-      // Reload transactions to get latest data
       await fetchTransactions()
-      // Reload items to recalculate movements
       await getItems()
       showToast("Refreshed Inventory", "success")
     } catch (error) {
@@ -251,17 +220,7 @@ function Inventory() {
 
   async function fetchSuppliers() {
     try {
-      const response = await fetch("http://localhost:5555/supplier", {
-        method: "GET",
-        credentials: "include",
-      })
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`)
-      }
-      const json = await response.json()
-      if (json.success && json.data) {
-        setSuppliers(json.data)
-      }
+      setSuppliers(await getSuppliers())
     } catch (e) {
       console.error("Failed to fetch suppliers:", e)
     }
@@ -269,83 +228,34 @@ function Inventory() {
 
   async function getItems() {
     setLoading(true)
-    const url = "http://localhost:5555/products"
     try {
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      })
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`)
-      }
-      const json = await response.json()
-      const data = json.data
-      const updatedArray = []
+      const data = await getProducts()
+      const updatedArray: InventoryItem[] = data.map(item => {
+        // Handle both populated supplier objects and raw id strings
+        const supplierField = Array.isArray(item.supplierIds) ? item.supplierIds : []
+        const supplierNames: string[] = []
+        const actualSupplierIds: string[] = []
 
-      console.log('Processing inventory items...')
-      console.log(`Available transactions: ${transactions.length}`)
-      console.log(`Available suppliers: ${suppliers.length}`)
-
-      for (const x in data) {
-        const item = data[x]
-
-        // Handle both populated and non-populated supplier data for multiple suppliers
-        let supplierNames = []
-        let actualSupplierIds = []
-
-        // Check if supplierIds exists (new format) or fall back to supplierId (old format)
-        const supplierField = item.supplierIds || (item.supplierId ? [item.supplierId] : [])
-
-        if (Array.isArray(supplierField) && supplierField.length > 0) {
-          // Multiple suppliers case
-          supplierField.forEach(supplierId => {
-            if (typeof supplierId === 'object' && supplierId !== null) {
-              // Already populated supplier object
-              supplierNames.push(supplierId.supplierName || 'Unknown Supplier')
-              actualSupplierIds.push(supplierId._id)
-            } else if (typeof supplierId === 'string') {
-              // Supplier ID string, need to find supplier data
-              const supplier = suppliers.find(s => s._id === supplierId)
-              supplierNames.push(supplier ? supplier.supplierName : 'Unknown Supplier')
-              actualSupplierIds.push(supplierId)
-            }
-          })
-        } else {
-          // Fallback for old single supplier format or missing data
-          let supplierName = 'Unknown Supplier'
-          let actualSupplierId = item.supplierId
-
-          if (typeof item.supplierId === 'object' && item.supplierId !== null) {
-            supplierName = item.supplierId.supplierName || 'Unknown Supplier'
-            actualSupplierId = item.supplierId._id
-          } else if (typeof item.supplierId === 'string') {
-            const supplier = suppliers.find(s => s._id === item.supplierId)
-            supplierName = supplier ? supplier.supplierName : 'Unknown Supplier'
-            actualSupplierId = item.supplierId
+        supplierField.forEach(supplierRef => {
+          if (typeof supplierRef === 'object' && supplierRef !== null) {
+            supplierNames.push(supplierRef.supplierName || 'Unknown Supplier')
+            actualSupplierIds.push(supplierRef._id)
+          } else if (typeof supplierRef === 'string') {
+            const supplier = suppliers.find(s => s._id === supplierRef)
+            supplierNames.push(supplier ? supplier.supplierName : 'Unknown Supplier')
+            actualSupplierIds.push(supplierRef)
           }
+        })
 
-          if (actualSupplierId) {
-            supplierNames.push(supplierName)
-            actualSupplierIds.push(actualSupplierId)
-          }
-        }
-
-        // Calculate movement for this item
-        const movement = calculateItemMovement(item.itemName)
-
-        const itemWithSuppliers = {
+        return {
           ...item,
-          supplierNames: supplierNames,
+          supplierNames,
           supplierIds: actualSupplierIds,
-          // Keep original fields for backward compatibility
           supplierName: supplierNames[0] || 'Unknown Supplier',
-          supplierId: actualSupplierIds[0] || item.supplierId,
-          movement: movement
+          movement: calculateItemMovement(item.itemName),
         }
-        updatedArray.push(itemWithSuppliers)
-      }
+      })
 
-      console.log('Inventory processing complete')
       setInventory(updatedArray)
     } catch (e) {
       console.error(e)
@@ -355,28 +265,10 @@ function Inventory() {
     }
   }
 
-  // Improved image URL handling
-  function getImageUrl(imageUrl) {
-    if (!imageUrl) return "https://via.placeholder.com/60?text=No+Image"
-
-    // If it's already a full URL, return as is
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl
-    }
-
-    // If it's a relative path starting with /, prepend the server URL
-    if (imageUrl.startsWith('/')) {
-      return `http://localhost:5555${imageUrl}`
-    }
-
-    // If it doesn't start with /, add the leading slash
-    return `http://localhost:5555/${imageUrl}`
-  }
-
   // Handle file upload for edit modal
-  const handleEditFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  const handleEditFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -399,44 +291,26 @@ function Inventory() {
     setEditImagePreview(previewUrl);
 
     try {
-      const formData = new FormData();
-      formData.append('image', file);
-
-      const response = await fetch('http://localhost:5555/upload/image', {
-        method: 'POST',
-        body: formData
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        // Set the uploaded image URL in the form
-        editForm.setValue('itemImage', result.data.url);
-        setEditImagePreview(`http://localhost:5555${result.data.url}`);
-        console.log('Image uploaded successfully:', result.data);
-      } else {
-        setEditUploadError(result.message || 'Failed to upload image');
-        setEditImagePreview(null);
-        editForm.setValue('itemImage', editingItem.itemImage); // Reset to original
-      }
+      const uploaded = await uploadImage(file);
+      editForm.setValue('itemImage', uploaded.url);
+      setEditImagePreview(getImageUrl(uploaded.url));
     } catch (error) {
-      console.error('Upload error:', error);
-      setEditUploadError('Network error during upload');
+      setEditUploadError((error as Error).message || 'Network error during upload');
       setEditImagePreview(null);
-      editForm.setValue('itemImage', editingItem.itemImage); // Reset to original
+      if (editingItem) editForm.setValue('itemImage', editingItem.itemImage); // Reset to original
     } finally {
       setUploadingEditImage(false);
-      // Clean up preview URL
       URL.revokeObjectURL(previewUrl);
     }
   };
 
-  function handleEdit(item) {
+  function handleEdit(item: InventoryItem) {
     setEditingItem(item)
-    // Reset upload states
     setEditImagePreview(getImageUrl(item.itemImage))
     setUploadingEditImage(false)
     setEditUploadError(null)
+
+    const ids = Array.isArray(item.supplierIds) ? item.supplierIds : []
 
     editForm.reset({
       itemName: item.itemName,
@@ -447,141 +321,69 @@ function Inventory() {
       itemCount: item.itemCount,
       itemImage: item.itemImage,
       itemCategory: item.itemCategory,
-      supplierIds: item.supplierIds || [item.supplierId] // Handle both cases
+      supplierIds: ids.filter((id): id is string => typeof id === 'string'),
     })
   }
 
-  async function onEditSubmit(data) {
-    const url = `http://localhost:5555/products/${editingItem._id}`
+  async function onEditSubmit(data: EditFormValues) {
+    if (!editingItem) return
     try {
-      const response = await fetch(url, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(data),
+      await updateProduct(editingItem._id, {
+        ...data,
+        itemPrice: Number(data.itemPrice),
+        itemCount: Number(data.itemCount),
       })
 
-      if (response.ok) {
-        setEditingItem(null)
-        // Reset edit states
-        setEditImagePreview(null)
-        setUploadingEditImage(false)
-        setEditUploadError(null)
-        getItems()
-        showToast("Inventory item updated successfully")
-      } else {
-        throw new Error("Failed to update item")
-      }
+      setEditingItem(null)
+      setEditImagePreview(null)
+      setUploadingEditImage(false)
+      setEditUploadError(null)
+      getItems()
+      showToast("Inventory item updated successfully")
     } catch (error) {
-      console.error("Edit error:", error.message)
+      console.error("Edit error:", (error as Error).message)
       showToast("Failed to update inventory item", "error")
     }
   }
 
-  function handleDelete(item) {
+  function handleDelete(item: InventoryItem) {
     setDeleteConfirm(item)
   }
 
   async function confirmDelete() {
-    const url = `${import.meta.env.VITE_API_URL}/products/${deleteConfirm._id}`
+    if (!deleteConfirm) return
     try {
-      const response = await fetch(url, {
-        method: "DELETE",
-        credentials: "include",
-      })
-
-      if (response.ok) {
-        setDeleteConfirm(null)
-        getItems()
-        showToast("Inventory item deleted successfully")
-      } else {
-        throw new Error("Failed to delete item")
-      }
+      await deleteProduct(deleteConfirm._id)
+      setDeleteConfirm(null)
+      getItems()
+      showToast("Inventory item deleted successfully")
     } catch (error) {
-      console.error("Delete error:", error.message)
+      console.error("Delete error:", (error as Error).message)
       showToast("Failed to delete inventory item", "error")
     }
   }
 
   // Handle reorder functionality
-  function handleReorder(item) {
-    console.log('Handling reorder for item:', item.itemName)
-    console.log('Item supplier data:', {
-      supplierIds: item.supplierIds,
-      supplierNames: item.supplierNames,
-      legacy_supplierId: item.supplierId
-    })
+  function handleReorder(item: InventoryItem) {
+    // Resolve all suppliers for this item
+    const itemSuppliers = item.supplierIds
+      .map(supplierId => suppliers.find(s => s._id === supplierId) ?? null)
+      .filter((supplier): supplier is Supplier => supplier !== null)
 
-    // Handle multiple suppliers (new format)
-    if (item.supplierIds && Array.isArray(item.supplierIds) && item.supplierIds.length > 0) {
-      // Find all suppliers for this item
-      const itemSuppliers = item.supplierIds.map(supplierId => {
-        const supplier = suppliers.find(s => s._id === supplierId)
-        if (!supplier) {
-          console.warn(`Supplier with ID ${supplierId} not found`)
-          return null
-        }
-        return supplier
-      }).filter(supplier => supplier !== null) // Remove null entries
-
-      if (itemSuppliers.length === 0) {
-        showToast("No supplier information found for this item. Cannot generate reorder form.", "error")
-        return
-      }
-
-      console.log(`Found ${itemSuppliers.length} suppliers for ${item.itemName}:`, itemSuppliers.map(s => s.supplierName))
-
-      // Generate reorder forms for all suppliers
+    if (itemSuppliers.length > 0) {
       printReorderForm(item, itemSuppliers, showToast)
       return
     }
 
-    // Handle single supplier (legacy format)
-    if (item.supplierId) {
-      const supplier = suppliers.find(s => s._id === item.supplierId)
-
-      if (!supplier) {
-        showToast("Supplier information not found. Cannot generate reorder form.", "error")
-        return
-      }
-
-      console.log(`Found single supplier for ${item.itemName}:`, supplier.supplierName)
-
-      // Generate reorder form for single supplier
-      printReorderForm(item, [supplier], showToast)
-      return
-    }
-
-    // No supplier information found
-    showToast("No supplier information available for this item. Cannot generate reorder form.", "error")
-  }
-
-  function formatPrice(price) {
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP'
-    }).format(price)
-  }
-
-  function formatDate(dateString) {
-    if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleDateString('en-PH')
-  }
-
-  function getStockStatus(count) {
-    if (count === 0) return { label: 'Out of Stock', colorScheme: 'red' }
-    if (count <= 10) return { label: 'Low Stock', colorScheme: 'orange' }
-    return { label: 'In Stock', colorScheme: 'green' }
+    showToast("No supplier information found for this item. Cannot generate reorder form.", "error")
   }
 
   // Check if item needs reordering (out of stock or low stock)
-  function needsReorder(count, movement) {
-    return count <= 10 || movement === 'Fast Moving'
+  function needsReorder(count: number, movement: string) {
+    return count <= LOW_STOCK_THRESHOLD || movement === 'Fast Moving'
   }
 
-  function renderSortIcon(columnKey) {
+  function renderSortIcon(columnKey: SortKey) {
     if (sortConfig.key !== columnKey) {
       return <span className={styles.sortIcon}>⇅</span>
     }
@@ -621,7 +423,6 @@ function Inventory() {
               </p>
             </div>
 
-            {/* Add refresh button */}
             <button
               className={`${styles.button} ${styles.refresh}`}
               onClick={refreshMovements}
@@ -705,11 +506,11 @@ function Inventory() {
                   </td>
                 </tr>
               ) : (
-                filteredInventory.map((item, index) => {
+                filteredInventory.map((item) => {
                   const stockStatus = getStockStatus(item.itemCount);
                   return (
                     <tr
-                      key={item._id || index}
+                      key={item._id}
                       className={styles.tableRow}
                     >
                       <td className={styles.tableCell}>
@@ -719,8 +520,7 @@ function Inventory() {
                             alt={item.itemName}
                             className={styles.productImage}
                             onError={(e) => {
-                              console.log('Image failed to load:', item.itemImage)
-                              e.target.src = "https://via.placeholder.com/60?text=No+Image"
+                              e.currentTarget.src = "https://via.placeholder.com/60?text=No+Image"
                             }}
                           />
                           <div className={styles.productInfo}>
@@ -806,7 +606,6 @@ function Inventory() {
                             <FiTrash2 />
                             Delete
                           </button>
-                          {/* Reorder button - only show for items that need reordering, AND THATS HNIGH MOVEMENT */}
                           {needsReorder(item.itemCount, item.movement) && (
                             <button
                               className={`${styles.button} ${styles.reorder}`}
@@ -814,7 +613,7 @@ function Inventory() {
                               title={
                                 item.itemCount === 0
                                   ? "Item is out of stock - Generate urgent reorder form"
-                                  : item.itemCount <= 10
+                                  : item.itemCount <= LOW_STOCK_THRESHOLD
                                     ? "Item is low in stock - Generate reorder form"
                                     : "Fast moving item - Generate proactive reorder form"
                               }
@@ -963,7 +762,6 @@ function Inventory() {
                   />
                 </div>
 
-                {/* NEW: File picker for image instead of URL input */}
                 <div className={styles.formGroup}>
                   <label className={styles.label}>
                     Product Image *
