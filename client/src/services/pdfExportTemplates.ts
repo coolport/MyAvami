@@ -1,10 +1,56 @@
-// pdfExportTemplates.js
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
+import type { Notification, Product, Transaction, User } from '../types';
+
+interface SalesReportData {
+  totalSales: number;
+  totalTransactions: number;
+  avgTransactionValue: number;
+  dailySales?: Array<{ date: string; sales: number; transactions: number }>;
+  dateRange?: { start: string | Date; end: string | Date };
+}
+
+interface InventoryReportData {
+  totalInventoryValue: number;
+  totalItems: number;
+  lowStockItems: Product[];
+  outOfStockItems: Product[];
+  expiringItems: Product[];
+  categoryData?: Array<{ category: string; count: number; value: number }>;
+}
+
+interface EmployeePerformance {
+  name: string;
+  username: string;
+  role: string;
+  transactions: number;
+  sales: number;
+  avgSale: number;
+}
+
+interface EmployeeReportData {
+  totalEmployees: number;
+  adminCount: number;
+  employeeCount: number;
+  employeePerformance: EmployeePerformance[];
+  dateRange?: { start: string; end: string };
+}
+
+type ReportType = 'sales' | 'inventory' | 'employee';
+
+declare module 'jspdf' {
+  interface jsPDF {
+    lastAutoTable?: { finalY: number };
+  }
+}
+
+// Y position after the most recent table (plus spacing), or the given fallback.
+const afterTable = (doc: jsPDF, fallback: number): number =>
+  doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : fallback;
 
 // Utility function to add header to PDF
-const addPDFHeader = (doc, title) => {
+const addPDFHeader = (doc: jsPDF, title: string): number => {
   const pageWidth = doc.internal.pageSize.width;
   const reportDate = new Date().toLocaleDateString();
 
@@ -30,7 +76,12 @@ const addPDFHeader = (doc, title) => {
 };
 
 // Utility function to add chart to PDF
-const addChartToPDF = async (doc, chartElementId, yPosition, title) => {
+const addChartToPDF = async (
+  doc: jsPDF,
+  chartElementId: string,
+  yPosition: number,
+  title: string
+): Promise<number> => {
   const chartElement = document.getElementById(chartElementId);
   if (chartElement) {
     try {
@@ -62,7 +113,10 @@ const addChartToPDF = async (doc, chartElementId, yPosition, title) => {
 };
 
 // Sales Report PDF
-export const generateSalesPDF = async (salesData, transactions) => {
+export const generateSalesPDF = async (
+  salesData: SalesReportData,
+  transactions?: Transaction[]
+): Promise<jsPDF> => {
   const doc = new jsPDF();
   let yPos = addPDFHeader(doc, 'SALES REPORT');
 
@@ -76,7 +130,7 @@ export const generateSalesPDF = async (salesData, transactions) => {
 
   // Calculate additional metrics from available data
   const daysDiff = salesData.dateRange ?
-    Math.ceil((new Date(salesData.dateRange.end) - new Date(salesData.dateRange.start)) / (1000 * 60 * 60 * 24)) + 1 :
+    Math.ceil((new Date(salesData.dateRange.end).getTime() - new Date(salesData.dateRange.start).getTime()) / (1000 * 60 * 60 * 24)) + 1 :
     1;
   const dailyAverage = salesData.totalSales / Math.max(1, daysDiff);
 
@@ -108,7 +162,7 @@ export const generateSalesPDF = async (salesData, transactions) => {
     styles: { fontSize: 10 }
   });
 
-  yPos = doc.lastAutoTable.finalY + 15;
+  yPos = afterTable(doc, yPos);
 
   // Daily Sales Table
   if (salesData.dailySales && salesData.dailySales.length > 0) {
@@ -132,7 +186,7 @@ export const generateSalesPDF = async (salesData, transactions) => {
       styles: { fontSize: 10 }
     });
 
-    yPos = doc.lastAutoTable.finalY + 15;
+    yPos = afterTable(doc, yPos);
   }
 
   // Recent Transactions Table (Top 10)
@@ -143,13 +197,13 @@ export const generateSalesPDF = async (salesData, transactions) => {
     yPos += 10;
 
     const recentTransactions = transactions
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 10)
       .map(t => [
         new Date(t.createdAt).toLocaleDateString(),
         t.transactionEmployee || 'N/A',
         `₱${(t.transactionTotal || 0).toLocaleString()}`,
-        t.transactionMethod || 'N/A'
+        t.transactionPaymentMethod || 'N/A'
       ]);
 
     autoTable(doc, {
@@ -161,7 +215,7 @@ export const generateSalesPDF = async (salesData, transactions) => {
       styles: { fontSize: 9 }
     });
 
-    yPos = doc.lastAutoTable.finalY + 15;
+    yPos = afterTable(doc, yPos);
   }
 
   // Add new page for charts if needed
@@ -177,7 +231,10 @@ export const generateSalesPDF = async (salesData, transactions) => {
 };
 
 // Inventory Report PDF
-export const generateInventoryPDF = async (inventoryData, products) => {
+export const generateInventoryPDF = async (
+  inventoryData: InventoryReportData,
+  products?: Product[]
+): Promise<jsPDF> => {
   const doc = new jsPDF();
   let yPos = addPDFHeader(doc, 'INVENTORY REPORT');
 
@@ -204,7 +261,7 @@ export const generateInventoryPDF = async (inventoryData, products) => {
     styles: { fontSize: 10 }
   });
 
-  yPos = doc.lastAutoTable.finalY + 15;
+  yPos = afterTable(doc, yPos);
 
   // Category Distribution Table
   if (inventoryData.categoryData && inventoryData.categoryData.length > 0) {
@@ -228,7 +285,7 @@ export const generateInventoryPDF = async (inventoryData, products) => {
       styles: { fontSize: 10 }
     });
 
-    yPos = doc.lastAutoTable.finalY + 15;
+    yPos = afterTable(doc, yPos);
   }
 
   // Low Stock Items Table
@@ -254,7 +311,7 @@ export const generateInventoryPDF = async (inventoryData, products) => {
       styles: { fontSize: 9 }
     });
 
-    yPos = doc.lastAutoTable.finalY + 15;
+    yPos = afterTable(doc, yPos);
   }
 
   // Out of Stock Items Table
@@ -284,7 +341,7 @@ export const generateInventoryPDF = async (inventoryData, products) => {
       styles: { fontSize: 9 }
     });
 
-    yPos = doc.lastAutoTable.finalY + 15;
+    yPos = afterTable(doc, yPos);
   }
 
   // Expiring Items Table
@@ -303,7 +360,7 @@ export const generateInventoryPDF = async (inventoryData, products) => {
       item.itemName || 'N/A',
       item.itemCategory || 'N/A',
       item.itemCount?.toString() || '0',
-      new Date(item.itemExpiration).toLocaleDateString()
+      item.itemExpiration ? new Date(item.itemExpiration).toLocaleDateString() : 'N/A'
     ]);
 
     autoTable(doc, {
@@ -315,7 +372,7 @@ export const generateInventoryPDF = async (inventoryData, products) => {
       styles: { fontSize: 9 }
     });
 
-    yPos = doc.lastAutoTable.finalY + 15;
+    yPos = afterTable(doc, yPos);
   }
 
   // Add chart if space available
@@ -327,7 +384,11 @@ export const generateInventoryPDF = async (inventoryData, products) => {
 };
 
 // Employee Report PDF
-export const generateEmployeePDF = async (employeeData, notifications, users) => {
+export const generateEmployeePDF = async (
+  employeeData: EmployeeReportData,
+  notifications?: Notification[],
+  users?: User[]
+): Promise<jsPDF> => {
   const doc = new jsPDF();
   let yPos = addPDFHeader(doc, 'EMPLOYEE REPORT');
 
@@ -362,7 +423,7 @@ export const generateEmployeePDF = async (employeeData, notifications, users) =>
     styles: { fontSize: 10 }
   });
 
-  yPos = doc.lastAutoTable.finalY + 15;
+  yPos = afterTable(doc, yPos);
 
   // Employee Performance Table
   if (employeeData.employeePerformance && employeeData.employeePerformance.length > 0) {
@@ -388,7 +449,7 @@ export const generateEmployeePDF = async (employeeData, notifications, users) =>
       styles: { fontSize: 9 }
     });
 
-    yPos = doc.lastAutoTable.finalY + 15;
+    yPos = afterTable(doc, yPos);
   }
 
   // Employee Details Table
@@ -420,7 +481,7 @@ export const generateEmployeePDF = async (employeeData, notifications, users) =>
       styles: { fontSize: 8 }
     });
 
-    yPos = doc.lastAutoTable.finalY + 15;
+    yPos = afterTable(doc, yPos);
   }
 
   // Add chart if space available
@@ -432,28 +493,39 @@ export const generateEmployeePDF = async (employeeData, notifications, users) =>
 };
 
 // Main export function
-export const exportToPDF = async (reportType, data, additionalData = {}) => {
-  let doc;
+export const exportToPDF = async (
+  reportType: ReportType,
+  data: SalesReportData | InventoryReportData | EmployeeReportData,
+  additionalData: {
+    transactions?: Transaction[];
+    products?: Product[];
+    notifications?: Notification[];
+    users?: User[];
+  } = {}
+): Promise<void> => {
+  let doc: jsPDF | undefined;
   const today = new Date();
   const dateString = today.toISOString().split('T')[0];
 
   try {
     switch (reportType) {
       case 'sales':
-        doc = await generateSalesPDF(data, additionalData.transactions);
-        doc.save(`sales-report-${dateString}.pdf`);
+        doc = await generateSalesPDF(data as SalesReportData, additionalData.transactions);
         break;
       case 'inventory':
-        doc = await generateInventoryPDF(data, additionalData.products);
-        doc.save(`inventory-report-${dateString}.pdf`);
+        doc = await generateInventoryPDF(data as InventoryReportData, additionalData.products);
         break;
       case 'employee':
-        doc = await generateEmployeePDF(data, additionalData.notifications, additionalData.users);
-        doc.save(`employee-report-${dateString}.pdf`);
+        doc = await generateEmployeePDF(
+          data as EmployeeReportData,
+          additionalData.notifications,
+          additionalData.users
+        );
         break;
       default:
         console.error('Unknown report type');
     }
+    doc?.save(`${reportType}-report-${dateString}.pdf`);
   } catch (error) {
     console.error('Error generating PDF:', error);
     alert('Error generating PDF report. Please try again.');

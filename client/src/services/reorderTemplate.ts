@@ -1,5 +1,7 @@
-// ReorderFormTemplate.js
-export const generateReorderFormHTML = (item, suppliers) => {
+// Reorder form template for generating printable supplier purchase requests.
+import type { Product, Supplier } from '../types';
+
+export const generateReorderFormHTML = (item: Product, suppliers: Supplier[]): string => {
   const currentDate = new Date().toLocaleDateString('en-PH', {
     year: 'numeric',
     month: 'long',
@@ -457,7 +459,11 @@ export const generateReorderFormHTML = (item, suppliers) => {
   `
 }
 
-export const printReorderForm = (item, suppliers, showToast) => {
+export const printReorderForm = (
+  item: Product,
+  suppliers: Supplier[],
+  showToast: (message: string, type?: string) => void
+): void => {
   try {
     // Handle both single supplier and multiple suppliers
     const supplierList = Array.isArray(suppliers) ? suppliers : [suppliers]
@@ -471,6 +477,12 @@ export const printReorderForm = (item, suppliers, showToast) => {
 
     // Create new window and print
     const printWindow = window.open('', '_blank')
+
+    if (!printWindow) {
+      showToast("Failed to generate reorder form", "error")
+      return
+    }
+
     printWindow.document.write(printContent)
     printWindow.document.close()
 
