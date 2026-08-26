@@ -9,6 +9,9 @@ services:
       - "5555:5555"
     environment:
       - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/myavamifinal
+    depends_on:
+      - mongo
 
   frontend:
     build:
@@ -17,3 +20,13 @@ services:
       - "5173:5173"
     depends_on:
       - backend
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
